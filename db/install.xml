@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="message/output/whatsapp/db" VERSION="20260912" COMMENT="XMLDB file for Moodle message/output/whatsapp"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="message_whatsapp_user" COMMENT="WhatsApp phone number and opt-in of each user. Without a row with optin=1 nothing is ever sent to that user.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The user this phone number belongs to."/>
+        <FIELD NAME="phone" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="Phone number normalised to E.164, empty when it could not be resolved."/>
+        <FIELD NAME="source" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="manual" SEQUENCE="false" COMMENT="Where the number came from: profile1, profile2, custom (custom profile field) or manual (typed by the user)."/>
+        <FIELD NAME="optin" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 when the user consented to receive notifications on WhatsApp."/>
+        <FIELD NAME="optintime" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time of the last change of optin, kept as evidence of the consent."/>
+        <FIELD NAME="verified" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 when the number passed the OTP verification. Informative until that phase ships."/>
+        <FIELD NAME="verifiedtime" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time the number was verified."/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="active" SEQUENCE="false" COMMENT="active, invalid (the provider rejected the number) or blocked (the user blocked the sender)."/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign-unique" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="phone" UNIQUE="false" FIELDS="phone" COMMENT="Inbound webhooks and delivery reports arrive with the phone number, not with the user."/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="message_whatsapp_queue" COMMENT="Outgoing queue. send_message() only writes here; the send_queue scheduled task is the only thing that talks to the network.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Recipient."/>
+        <FIELD NAME="savedmessageid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Id of the notification saved by core, when core saved one. No foreign key: core may delete it before we do."/>
+        <FIELD NAME="component" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Frankenstyle component of the event, for example mod_assign."/>
+        <FIELD NAME="name" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Message provider name inside the component, for example assign_notification."/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Course the notification belongs to, 0 when it is site wide."/>
+        <FIELD NAME="phone" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="Destination in E.164, copied at enqueue time so that a later profile change does not rewrite history."/>
+        <FIELD NAME="templatekey" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Name of the approved template used for this message."/>
+        <FIELD NAME="params" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON encoded list of the sanitised template parameters."/>
+        <FIELD NAME="url" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Target of the template button, normally the contexturl of the event."/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pending" SEQUENCE="false" COMMENT="pending, sending, sent, delivered, read, failed or skipped."/>
+        <FIELD NAME="attempts" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Delivery attempts already made, capped by the retry policy."/>
+        <FIELD NAME="nextattempt" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Not before this time, used by the exponential backoff and by the quiet hours."/>
+        <FIELD NAME="providermsgid" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Message id given by Meta or by the gateway, used to match the delivery reports."/>
+        <FIELD NAME="error" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Last error, for the admin report."/>
+        <FIELD NAME="pricingcategory" TYPE="char" LENGTH="40" NOTNULL="false" SEQUENCE="false" COMMENT="Pricing category reported by Meta, for example utility or service."/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timesent" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time the provider accepted the message."/>
+        <FIELD NAME="timestatus" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time of the last delivery status change."/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="status-nextattempt" UNIQUE="false" FIELDS="status, nextattempt" COMMENT="Used by send_queue to claim the rows that are due."/>
+        <INDEX NAME="providermsgid" UNIQUE="false" FIELDS="providermsgid" COMMENT="Used by the webhook and by sync_status to find the row of an incoming status."/>
+        <INDEX NAME="userid-timecreated" UNIQUE="false" FIELDS="userid, timecreated" COMMENT="Used by the per user daily cap."/>
+        <INDEX NAME="status-timecreated" UNIQUE="false" FIELDS="status, timecreated" COMMENT="Used by cleanup to find terminal rows older than the retention period."/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="message_whatsapp_click" COMMENT="Clicks on the button of a sent template, registered by go.php.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="queueid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Queue row whose button was clicked."/>
+        <FIELD NAME="timeclicked" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="useragent" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="User agent of the click, optional."/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="queueid" TYPE="foreign" FIELDS="queueid" REFTABLE="message_whatsapp_queue" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>
