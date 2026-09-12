@@ -18,7 +18,7 @@
  * Strings for component 'message_whatsapp', language 'es'.
  *
  * @package    message_whatsapp
- * @copyright  2026 Gustavo Cuneo
+ * @copyright  2026 Guillermo Cuneo
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

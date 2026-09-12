@@ -75,7 +75,7 @@ the parent workspace. Continuous integration runs
 
 GPL v3 or later. See [LICENSE](LICENSE).
 
-Copyright 2026 Gustavo Cuneo.
+Copyright 2026 Guillermo Cuneo.
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General
 Public License as published by the Free Software Foundation, either version 3 of the License, or (at your

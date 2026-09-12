@@ -18,7 +18,7 @@
  * Definition of the WhatsApp message processor.
  *
  * @package    message_whatsapp
- * @copyright  2026 Gustavo Cuneo
+ * @copyright  2026 Guillermo Cuneo
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -37,7 +37,7 @@ require_once($CFG->dirroot . '/message/output/lib.php');
  * The queue, the recipient resolution and the transports are added by the later tasks of the plan.
  *
  * @package    message_whatsapp
- * @copyright  2026 Gustavo Cuneo
+ * @copyright  2026 Guillermo Cuneo
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class message_output_whatsapp extends message_output {

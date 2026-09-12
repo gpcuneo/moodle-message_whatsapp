@@ -18,7 +18,7 @@
  * Definition of the privacy provider of the WhatsApp message processor.
  *
  * @package    message_whatsapp
- * @copyright  2026 Gustavo Cuneo
+ * @copyright  2026 Guillermo Cuneo
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -32,7 +32,7 @@ namespace message_whatsapp\privacy;
  * the external locations of Meta and of the gateway, arrives with the tables that hold that data.
  *
  * @package    message_whatsapp
- * @copyright  2026 Gustavo Cuneo
+ * @copyright  2026 Guillermo Cuneo
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements \core_privacy\local\metadata\null_provider {
