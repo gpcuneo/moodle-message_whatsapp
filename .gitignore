@@ -1,0 +1,18 @@
+# Moodle / plugin build artefacts.
+/vendor/
+/node_modules/
+/.eslintcache
+/phpunit.xml
+/build/
+/moodle-plugin-ci/
+
+# Editors and OS.
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+
+# Never commit local configuration or credentials.
+.env
+*.local.php
