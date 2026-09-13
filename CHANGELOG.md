@@ -86,6 +86,13 @@ everything below has been built and verified on Moodle 4.5 and 5.2.
   Manager form. No code changed: `local\template_mapper` supplies three parameters in order and never read the
   wording around them, so a site is free to reword it — but not to remove it.
 
+- **The two modes table no longer says the service holds the WhatsApp account and pays Meta for you.** It does
+  neither. In gateway mode the account is yours, the number is yours, the messages go out under your name, and
+  Meta bills you on the payment method in your own account; what the service charges for is the software. The
+  table also claimed gateway mode needs no Meta account at all, which was never going to be true: it needs one,
+  and the difference is that the service creates it with you and then operates it with permission you can
+  withdraw. Adding the payment method and verifying the business stay with the account holder in both modes.
+
 ### Known limitations
 
 - **Gateway mode is not implemented.** The *Sending mode* setting offers it and choosing it reports

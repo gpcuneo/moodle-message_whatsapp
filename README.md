@@ -98,16 +98,26 @@ everything else -- the opt-in, the phone numbers, the queue, the retries, the re
 
 | | **Direct** | **Gateway** |
 |---|---|---|
-| What you need | A Meta app, a WhatsApp Business Account, a phone number and an approved template | The address of a gateway service and one API key |
-| Who holds the WhatsApp account | You | The service |
-| Who gets the template approved | You | The service |
+| What you need | A Meta app, a WhatsApp Business Account, a phone number and an approved template | A WhatsApp Business Account, created through the service's guided sign-up, plus the service address and one API key |
+| Who owns the WhatsApp account | You | You. The service operates it with permission you grant, and you can withdraw that permission at any time |
+| Who does the Meta work | You: the app, the tokens, the template and the webhook | The service, inside your account |
 | Delivery reports arrive | Pushed by Meta to `webhook.php` | Pulled from the service every five minutes |
-| What Meta bills you | Your own conversations | Nothing: the service bills you |
+| What Meta bills you | Your own messages, on the payment method in your account | The same: your own messages, on the payment method in your account |
+| What the service bills you | Nothing. There is no service | The software, separately from what Meta charges |
 | The button in the message opens | `go.php` of this site | A short link of the service, which lands on `go.php` of this site |
 
-The requirements table above is direct mode. **Gateway mode needs neither a Meta account nor a public
-webhook**, because nothing is pushed at the site: the two settings under *Gateway service* are the whole of the
-configuration, and the *Test connection* button tells you whether the key works.
+The requirements table above is direct mode. **Gateway mode still needs no public webhook**, because nothing is
+pushed at the site: the two settings under *Gateway service* are the whole of the Moodle side, and the *Test
+connection* button tells you whether the key works.
+
+What gateway mode does need is a WhatsApp Business Account of your own, and the difference is who does the work
+inside it. The service walks you through creating it in a few minutes, then registers your number and gets the
+template approved for you. **You are the account holder throughout**: the number is yours, the messages go out
+under your name, and Meta bills you for them. What you save is the setup and the operating, not the account.
+
+Two things stay yours in both modes, because Meta asks them of the account holder and no software can do them
+for you: **adding a payment method**, without which nothing is delivered, and **verifying your business**, until
+which Meta caps the account at 250 conversations started per 24 hours.
 
 ## Install
 
@@ -152,8 +162,9 @@ What you will end up with, and where each piece goes in Moodle:
 
 ## Gateway mode, in two settings
 
-If you are using a gateway service instead of your own Meta account, **steps 1 to 8 below are not yours to do**
-— the service did them. Skip to this, and then to step 9.
+If you are using a gateway service, **steps 1 to 8 below are not yours to do**: the service does them inside
+your own WhatsApp Business Account. What stays yours is the payment method and your business verification, and
+the service tells you when. Skip to this section, and then to step 9.
 
 1. *Site administration → Plugins → Message outputs → WhatsApp*.
 2. **Sending mode**: Gateway.
