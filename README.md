@@ -399,12 +399,30 @@ The statuses mean:
 | `delivered` | It reached the phone. |
 | `read` | The recipient opened it. Only if they have read receipts on. |
 | `failed` | It will not be sent. The error column says why. |
-| `skipped` | Never attempted: no opt-in, or over the daily cap. |
+| `skipped` | Never attempted: no opt-in, over the daily cap, or a number the provider refused to deliver to. |
 
 Reading the report needs the `message/whatsapp:viewlog` capability, which a manager can be given without also
 being given the capability that hands out the site's Meta credentials.
 
-Rows disappear after `retention` days. The report can only show what has not been cleaned up yet.
+Next to it is a **status page**, at `/message/output/whatsapp/status.php`, which answers the other question:
+not what became of one message, but whether anything is going out at all. It shows what the channel did today
+— sent, delivered, read, failed, skipped — what is still waiting, how long the oldest entry has been waiting,
+and when the sending task last ran. If there is something waiting and that task has not run in ten minutes, the
+page says so in red: it is scheduled every minute, so a silence that long means cron is not running or is not
+reaching it, and a queue that is not being drained looks exactly like a queue with nothing in it.
+
+Rows disappear after `retention` days, and so do the records of the clicks on their buttons. Entries still
+waiting to be sent are never deleted. Set `retention` to 0 to keep everything for good. The report can only show
+what has not been cleaned up yet.
+
+### A number WhatsApp cannot reach
+
+When Meta answers that a number is undeliverable — it is not on WhatsApp, or it is a landline that ended up in
+the profile field — the plugin marks that number as invalid and stops sending to it. The person sees a notice in
+their own notification preferences saying that WhatsApp could not deliver to it and how to fix it, and their
+later notifications are recorded as `skipped` with that reason rather than attempted again. **Saving a number in
+their preferences clears the mark**, which is the only thing that does; nothing an administrator can do from the
+report brings it back, because the number is the user's to correct.
 
 ## When something fails
 

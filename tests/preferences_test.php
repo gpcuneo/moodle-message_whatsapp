@@ -120,6 +120,26 @@ final class preferences_test extends \advanced_testcase {
     }
 
     /**
+     * A number the provider refused gets a notice of its own, and keeps being shown so it can be corrected.
+     *
+     * The same invalid mark covers two different problems. Telling a user whose number is perfectly readable that
+     * it "was not understood" would send them to retype the very number that is already there.
+     *
+     * @return void
+     */
+    public function test_a_number_the_provider_refused_is_reported_as_such(): void {
+        $user = $this->getDataGenerator()->create_user(['phone2' => '011 15 1234 5678']);
+        recipient::resolve((int) $user->id)->mark_undeliverable();
+
+        $html = $this->render_for($user);
+
+        $this->assertStringContainsString(get_string('prefphoneundeliverable', 'message_whatsapp'), $html);
+        $this->assertStringNotContainsString(get_string('prefphoneinvalid', 'message_whatsapp'), $html);
+        // The number stays on the screen: it is what the user has to look at to see what is wrong with it.
+        $this->assertStringContainsString('+5491112345678', $html);
+    }
+
+    /**
      * A user with nothing in the profile is invited to type a number.
      *
      * @return void

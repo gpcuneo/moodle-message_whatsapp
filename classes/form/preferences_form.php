@@ -115,15 +115,22 @@ class preferences_form {
      * never deliver to. Storing that number and saying nothing would leave the user convinced that the channel is
      * on while every notification quietly fails, so the notice names the problem and shows the two ways to fix it.
      *
+     * The invalid mark is written for two different reasons and the number tells them apart. A number that could
+     * not be normalised is cleared as it is marked, so there is nothing to show and the notice asks for it again.
+     * A number the provider refused to deliver to is kept, because the user cannot correct what they cannot see,
+     * and the notice has to say that this number is not on WhatsApp rather than that it was not understood.
+     *
      * @param string $phone The stored number in E.164, or the empty string.
-     * @param int $invalid 1 when the last number seen could not be normalised.
+     * @param int $invalid 1 when the last number seen is marked invalid.
      * @param int $landline 1 when the stored number is known to be a landline.
      * @return string The HTML of the notices, empty when there is nothing to say.
      */
     private static function warnings(string $phone, int $invalid, int $landline): string {
         $html = '';
 
-        if ($invalid) {
+        if ($invalid && $phone !== '') {
+            $html .= self::notice(get_string('prefphoneundeliverable', 'message_whatsapp'), 'danger');
+        } else if ($invalid) {
             $html .= self::notice(get_string('prefphoneinvalid', 'message_whatsapp'), 'danger');
         } else if ($phone === '') {
             $html .= self::notice(get_string('prefnophone', 'message_whatsapp'), 'info');

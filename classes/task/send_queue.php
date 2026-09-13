@@ -26,7 +26,9 @@ namespace message_whatsapp\task;
 
 use core\task\scheduled_task;
 use message_whatsapp\local\queue;
+use message_whatsapp\local\recipient;
 use message_whatsapp\transport\factory;
+use message_whatsapp\transport\meta_cloud;
 use message_whatsapp\transport\result;
 use message_whatsapp\transport\transport_interface;
 use message_whatsapp\transport\unconfigured;
@@ -222,7 +224,7 @@ class send_queue extends scheduled_task {
                 (string) $id
             );
 
-            return $this->record($id, $result);
+            return $this->record($row, $result);
         } catch (\Throwable $e) {
             return $this->recover($id, $e);
         }
@@ -243,7 +245,9 @@ class send_queue extends scheduled_task {
      * @param result $result What the transport answered.
      * @return string One of the OUTCOME_* constants.
      */
-    protected function record(int $id, result $result): string {
+    protected function record(stdClass $row, result $result): string {
+        $id = (int) $row->id;
+
         if ($result->ok) {
             queue::mark_sent($id, $result->providermsgid);
             mtrace('  queue ' . $id . ': accepted by the provider.');
@@ -261,7 +265,43 @@ class send_queue extends scheduled_task {
         queue::mark_failed($id, $this->error_of($result));
         mtrace('  queue ' . $id . ': failed for good (' . $result->code . ').');
 
+        $this->mark_recipient_if_undeliverable($row, $result);
+
         return self::OUTCOME_FAILED;
+    }
+
+    /**
+     * Marks the recipient of a row when the provider said the failure was about their number.
+     *
+     * §3.4 asks for this, and until now nothing did it: {@see meta_cloud::CODE_UNDELIVERABLE} was defined, and
+     * documented as the code the task branches on, but no caller read it. The consequence was quiet and permanent.
+     * A landline sitting in the profile field of a user failed once per notification, forever, and the invalid mark
+     * that the preferences form has a red notice for never came on, so the one person who could fix the number was
+     * never told it was wrong.
+     *
+     * Only this one code marks the person. Every other permanent failure is about the site -- an unpaid account, an
+     * unapproved template, a token without permissions -- and marking a recipient for one of those would blame a
+     * user for something they cannot fix, and would stop their notifications until they retyped a number that was
+     * right all along.
+     *
+     * @param stdClass $row The queue row that failed.
+     * @param result $result What the transport answered.
+     * @return void
+     */
+    protected function mark_recipient_if_undeliverable(stdClass $row, result $result): void {
+        if ($result->code !== meta_cloud::CODE_UNDELIVERABLE) {
+            return;
+        }
+
+        $recipient = recipient::find((int) $row->userid);
+
+        if ($recipient === null) {
+            return;
+        }
+
+        $recipient->mark_undeliverable();
+        mtrace('  queue ' . (int) $row->id . ': the number of user ' . (int) $row->userid
+            . ' is marked invalid, the provider will not deliver to it.');
     }
 
     /**

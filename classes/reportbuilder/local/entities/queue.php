@@ -294,6 +294,7 @@ class queue extends base {
         $reasons = [
             store::SKIP_NO_OPTIN => 'logreasonnooptin',
             store::SKIP_DAILY_CAP => 'logreasondailycap',
+            store::SKIP_INVALID_PHONE => 'logreasoninvalidphone',
             store::ERROR_ORPHANED => 'logreasonorphaned',
         ];
 

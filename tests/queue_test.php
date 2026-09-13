@@ -183,6 +183,44 @@ final class queue_test extends \advanced_testcase {
     }
 
     /**
+     * A user whose number the provider refused is skipped under a reason of their own, not under "no consent".
+     *
+     * They did consent. Filing this under {@see queue::SKIP_NO_OPTIN} would make the delivery report state
+     * something untrue about them, and it is the report that someone reads to find out why nothing arrived.
+     *
+     * @return void
+     */
+    public function test_send_message_skips_a_user_whose_number_is_marked_invalid(): void {
+        $user = $this->opted_in_user();
+        recipient::find($user->id)->mark_undeliverable();
+
+        $processor = new \message_output_whatsapp();
+        $this->assertTrue($processor->send_message($this->eventdata($user)));
+
+        $row = $this->only_row();
+        $this->assertSame(queue::STATUS_SKIPPED, $row->status);
+        $this->assertSame(queue::SKIP_INVALID_PHONE, $row->error);
+        $this->assertNotSame(queue::SKIP_NO_OPTIN, $row->error);
+    }
+
+    /**
+     * Saving the number again clears the mark, which is the only way back that does not need an administrator.
+     *
+     * @return void
+     */
+    public function test_saving_the_number_again_puts_the_channel_back_on(): void {
+        $user = $this->opted_in_user();
+        $recipient = recipient::find($user->id);
+        $recipient->mark_undeliverable();
+        $this->assertFalse($recipient->is_sendable());
+
+        $recipient->set_phone('011 15 1234-5678');
+
+        $this->assertFalse($recipient->is_invalid());
+        $this->assertTrue($recipient->is_sendable());
+    }
+
+    /**
      * Personal messages between users are not queued: everything sent is an approved template.
      *
      * @return void

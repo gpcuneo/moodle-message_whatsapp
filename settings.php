@@ -55,6 +55,13 @@ $ADMIN->add('messaging', new admin_externalpage(
     'message/whatsapp:viewlog'
 ));
 
+$ADMIN->add('messaging', new admin_externalpage(
+    'message_whatsapp_status',
+    new lang_string('statuspage', 'message_whatsapp'),
+    new moodle_url('/message/output/whatsapp/status.php'),
+    'message/whatsapp:viewlog'
+));
+
 if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_heading(
         'message_whatsapp/generalsettings',

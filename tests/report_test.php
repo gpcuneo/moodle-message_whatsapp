@@ -141,6 +141,22 @@ final class report_test extends \advanced_testcase {
     }
 
     /**
+     * A number the provider refused reads as that, and never as a consent the user did give.
+     *
+     * @return void
+     */
+    public function test_an_invalid_number_is_not_reported_as_a_missing_consent(): void {
+        $user = $this->getDataGenerator()->create_user();
+        $this->add_row($user->id, queue::STATUS_SKIPPED, 0, queue::SKIP_INVALID_PHONE, 'mod_assign', 'assign', 10);
+
+        $error = $this->retrieve()['data']['rows'][0]['columns'][4];
+
+        $this->assertStringNotContainsString(queue::SKIP_INVALID_PHONE, $error);
+        $this->assertStringContainsString('will not deliver', $error);
+        $this->assertStringNotContainsString('has not consented', $error);
+    }
+
+    /**
      * A diagnostic from the provider is escaped before it reaches the page.
      *
      * The column holds text this site did not write. The sanitiser of the transport takes the token and anything

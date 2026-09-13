@@ -105,6 +105,15 @@ class queue {
     /** Reason stored in `error` when the user already reached the daily cap. */
     public const SKIP_DAILY_CAP = 'dailycap';
 
+    /**
+     * Reason stored in `error` when the number of the recipient is marked invalid.
+     *
+     * Separate from {@see self::SKIP_NO_OPTIN} because the two are different problems with different owners: one
+     * is a consent the user never gave, the other a number the provider refused to deliver to. Filing both under
+     * "has not consented" would make the report say something untrue about a user who did consent.
+     */
+    public const SKIP_INVALID_PHONE = 'invalidphone';
+
     /** Reason stored in `error` when a row was found abandoned in the `sending` state. */
     public const ERROR_ORPHANED = 'orphaned';
 
@@ -192,7 +201,10 @@ class queue {
             'timestatus' => $now,
         ];
 
-        if ($recipient === null || !$recipient->is_sendable()) {
+        if ($recipient !== null && $recipient->is_invalid()) {
+            $record->status = self::STATUS_SKIPPED;
+            $record->error = self::SKIP_INVALID_PHONE;
+        } else if ($recipient === null || !$recipient->is_sendable()) {
             $record->status = self::STATUS_SKIPPED;
             $record->error = self::SKIP_NO_OPTIN;
         } else if (self::exceeds_daily_cap(self::count_queued_today($userid, $now), self::daily_cap())) {

@@ -349,6 +349,30 @@ class recipient {
     }
 
     /**
+     * Marks the stored number as one WhatsApp will not deliver to.
+     *
+     * §3.4 asks the sending task to do this when the provider answers that the number is undeliverable, which is
+     * the one failure that says something about the person and not about the site. The number itself is **kept**,
+     * unlike the invalid mark that {@see self::set_phone()} writes when nothing could be normalised: this number
+     * was understood, it is the one the user has in their profile, and they cannot correct what they cannot see.
+     * Whether the mark means "not understood" or "not on WhatsApp" is read back off that difference.
+     *
+     * From here {@see self::is_sendable()} answers false, so the queue stops asking the provider the same question
+     * every time and starts recording the skip with a reason of its own. The mark is cleared by the user saving a
+     * number in their preferences, which is the only act that can make it wrong.
+     *
+     * @return void
+     */
+    public function mark_undeliverable(): void {
+        if ($this->status === self::STATUS_INVALID) {
+            return;
+        }
+
+        $this->status = self::STATUS_INVALID;
+        $this->save();
+    }
+
+    /**
      * Tells whether the last number seen for this user could not be understood.
      *
      * @return bool True when the row is marked invalid.

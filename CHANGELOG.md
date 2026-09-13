@@ -35,7 +35,9 @@ everything below has been built and verified on Moodle 4.5 and 5.2.
   `transport\factory`, `transport\unconfigured` (a transport that refuses and says why) and `transport\fake`
   (in memory, for Behat and manual testing).
 - **Scheduled tasks.** `send_queue` every minute, `sync_status` every five minutes (gateway mode only),
-  `cleanup` daily.
+  `cleanup` daily. `cleanup` deletes finished queue entries older than the `retention` setting along with the
+  records of the clicks on their buttons, in bounded batches; entries still waiting to be sent are never
+  deleted, and a retention of 0 keeps everything.
 - **Webhook.** `webhook.php`: GET answers Meta's verification challenge, POST validates the
   `X-Hub-Signature-256` HMAC of the raw body against the app secret before doing anything at all, and applies
   the delivery status to the queue row. Anything it does not understand is answered 200.
@@ -49,6 +51,15 @@ everything below has been built and verified on Moodle 4.5 and 5.2.
   handled with its status, attempts and error, filterable by status, recipient, component and date, with a
   retry action on failed rows. Behind `message/whatsapp:viewlog`, so a manager can read it without holding
   the capability that hands out the site's credentials.
+- **Status page.** `status.php`, next to the report and behind the same capability: what the channel did today
+  by outcome, what is still waiting, the age of the oldest waiting entry, and when the sending task last ran.
+  It says so in red when something is waiting and that task has gone quiet for ten minutes, which is the only
+  place on the site a stopped cron shows up as a stopped WhatsApp channel.
+- **Undeliverable numbers are marked.** When Meta answers that a number cannot be delivered to, the recipient
+  is marked invalid: nothing more is queued for it, the entries are recorded as skipped under a reason of their
+  own, and the user is told in their notification preferences that WhatsApp could not deliver to that number.
+  Saving a number in the preferences clears the mark. Only that one failure marks a recipient; every other
+  permanent failure is about the site.
 - **Capabilities.** `message/whatsapp:managesettings`, `message/whatsapp:viewlog`,
   `message/whatsapp:optinusers`.
 - **Privacy.** A full Privacy API provider: exports and deletes the three tables by user, and declares Meta as

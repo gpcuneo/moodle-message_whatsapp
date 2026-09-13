@@ -25,8 +25,10 @@
 namespace message_whatsapp;
 
 use message_whatsapp\local\queue;
+use message_whatsapp\local\recipient;
 use message_whatsapp\local\template_mapper;
 use message_whatsapp\task\send_queue;
+use message_whatsapp\transport\meta_cloud;
 use message_whatsapp\transport\result;
 use message_whatsapp\transport\transport_interface;
 
@@ -240,6 +242,56 @@ final class send_queue_task_test extends \advanced_testcase {
         $this->assertSame(1, (int) $this->field($id, 'attempts'));
         $this->assertStringContainsString('131026', (string) $this->field($id, 'error'));
         $this->assertStringContainsString('Message undeliverable', (string) $this->field($id, 'error'));
+    }
+
+    /**
+     * The one failure that is about the person marks their number, so the channel stops asking the same question.
+     *
+     * @return void
+     */
+    public function test_an_undeliverable_number_is_marked_invalid(): void {
+        $user = $this->getDataGenerator()->create_user(['phone2' => '011 15 1234 5678']);
+        $recipient = recipient::resolve((int) $user->id);
+        $recipient->set_optin(true);
+        $this->assertTrue($recipient->is_sendable());
+
+        $id = $this->queue_row(['userid' => $user->id]);
+
+        $this->run_task($this->transport_double([
+            $id => result::permanent_failure(meta_cloud::CODE_UNDELIVERABLE, 'Message undeliverable'),
+        ]));
+
+        $this->assertSame(queue::STATUS_FAILED, $this->field($id, 'status'));
+
+        $after = recipient::find((int) $user->id);
+        $this->assertTrue($after->is_invalid());
+        $this->assertFalse($after->is_sendable());
+        // The number is kept: the user cannot correct a number the form does not show them.
+        $this->assertNotSame('', $after->phone);
+    }
+
+    /**
+     * Every other permanent failure is about the site, and blaming the recipient for one would be wrong.
+     *
+     * @return void
+     */
+    public function test_a_permanent_failure_about_the_site_leaves_the_recipient_alone(): void {
+        $user = $this->getDataGenerator()->create_user(['phone2' => '011 15 1234 5678']);
+        $recipient = recipient::resolve((int) $user->id);
+        $recipient->set_optin(true);
+
+        $id = $this->queue_row(['userid' => $user->id]);
+
+        // 132001 is a template that does not exist: the site has to fix it, and no number is at fault.
+        $this->run_task($this->transport_double([
+            $id => result::permanent_failure('meta_132001', 'Template does not exist'),
+        ]));
+
+        $this->assertSame(queue::STATUS_FAILED, $this->field($id, 'status'));
+
+        $after = recipient::find((int) $user->id);
+        $this->assertFalse($after->is_invalid());
+        $this->assertTrue($after->is_sendable());
     }
 
     /**
