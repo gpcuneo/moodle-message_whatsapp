@@ -84,7 +84,14 @@ final class unconfigured implements transport_interface {
      * @param string|null $urlsuffix Ignored.
      * @return result The permanent failure this transport was built with.
      */
-    public function send_template(string $phone, string $template, string $lang, array $params, ?string $urlsuffix): result {
+    public function send_template(
+        string $phone,
+        string $template,
+        string $lang,
+        array $params,
+        ?string $urlsuffix,
+        string $idempotencykey
+    ): result {
         return $this->answer;
     }
 

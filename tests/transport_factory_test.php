@@ -89,6 +89,7 @@ final class transport_factory_test extends \advanced_testcase {
              * @param string $lang Template language.
              * @param string[] $params Body parameters.
              * @param string|null $urlsuffix Suffix of the URL button.
+             * @param string $idempotencykey Stable identifier of this attempt.
              * @return result Always a success.
              */
             public function send_template(
@@ -96,7 +97,8 @@ final class transport_factory_test extends \advanced_testcase {
                 string $template,
                 string $lang,
                 array $params,
-                ?string $urlsuffix
+                ?string $urlsuffix,
+                string $idempotencykey
             ): result {
                 return result::success('wamid.DOUBLE');
             }
@@ -139,6 +141,7 @@ final class transport_factory_test extends \advanced_testcase {
              * @param string $lang Template language.
              * @param string[] $params Body parameters.
              * @param string|null $urlsuffix Suffix of the URL button.
+             * @param string $idempotencykey Stable identifier of this attempt.
              * @return result Always a success.
              */
             public function send_template(
@@ -146,7 +149,8 @@ final class transport_factory_test extends \advanced_testcase {
                 string $template,
                 string $lang,
                 array $params,
-                ?string $urlsuffix
+                ?string $urlsuffix,
+                string $idempotencykey
             ): result {
                 return result::success('wamid.FAKE');
             }
@@ -254,7 +258,14 @@ final class transport_factory_test extends \advanced_testcase {
         $send = $reflection->getMethod('send_template');
         $this->assertSame(result::class, (string) $send->getReturnType());
         $this->assertSame(
-            ['string $phone', 'string $template', 'string $lang', 'array $params', '?string $urlsuffix'],
+            [
+                'string $phone',
+                'string $template',
+                'string $lang',
+                'array $params',
+                '?string $urlsuffix',
+                'string $idempotencykey',
+            ],
             array_map(fn($p) => $p->getType() . ' $' . $p->getName(), $send->getParameters())
         );
 
@@ -276,7 +287,7 @@ final class transport_factory_test extends \advanced_testcase {
         $this->assertSame(unconfigured::NAME, $transport->name());
         $this->assert_permanent_refusal($transport->check(), factory::CODE_NOT_CONFIGURED);
         $this->assert_permanent_refusal(
-            $transport->send_template('+5491141234567', 'moodle_notification', 'es_AR', ['a', 'b', 'c'], null),
+            $transport->send_template('+5491141234567', 'moodle_notification', 'es_AR', ['a', 'b', 'c'], null, '1'),
             factory::CODE_NOT_CONFIGURED
         );
     }
@@ -364,7 +375,7 @@ final class transport_factory_test extends \advanced_testcase {
         $this->assertTrue($transport->check()->ok);
         $this->assertSame(
             'wamid.DOUBLE',
-            $transport->send_template('+5491141234567', 'moodle_notification', 'es_AR', ['a'], null)->providermsgid
+            $transport->send_template('+5491141234567', 'moodle_notification', 'es_AR', ['a'], null, '1')->providermsgid
         );
     }
 
@@ -541,7 +552,7 @@ final class transport_factory_test extends \advanced_testcase {
     public function test_the_refusing_transport_answers_the_same_to_every_method(): void {
         $transport = unconfigured::because('some_code', 'Some reason.');
 
-        $sent = $transport->send_template('+5491141234567', 'moodle_notification', 'es_AR', ['a', 'b', 'c'], 'x');
+        $sent = $transport->send_template('+5491141234567', 'moodle_notification', 'es_AR', ['a', 'b', 'c'], 'x', '1');
 
         $this->assertSame('some_code', $sent->code);
         $this->assertSame('Some reason.', $sent->message);

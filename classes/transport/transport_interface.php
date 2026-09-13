@@ -60,14 +60,29 @@ interface transport_interface {
      * Meta per language, and a profile that changed language between the queueing and the send must not make the
      * plugin ask for a version that was never approved.
      *
+     * The idempotency key is required rather than optional on purpose. Forgetting it would not fail loudly: it would
+     * send the message twice, which is exactly the thing it exists to prevent, and it would only show up as a user
+     * receiving the same notification twice. A required parameter cannot be forgotten. It is named for the contract
+     * and not for the queue because what a provider needs is a stable identifier for this attempt, and the caller
+     * happens to spell it with the queue row id.
+     *
      * @param string $phone Destination in E.164, with no separators and no leading plus sign convention of its own.
      * @param string $template Name of the approved template, as registered with the provider.
      * @param string $lang Language code of the approved version of the template, for instance `es_AR` or `en`.
      * @param string[] $params Body parameters in template order, already sanitised.
      * @param string|null $urlsuffix Dynamic suffix of the URL button, or null when the template has no button.
+     * @param string $idempotencykey Stable identifier of this message, the same one on every retry of the same queue
+     *      row. A provider that supports idempotency uses it to refuse a duplicate; one that does not, ignores it.
      * @return result Outcome of the attempt. Never throws: a failure is a result, not an exception.
      */
-    public function send_template(string $phone, string $template, string $lang, array $params, ?string $urlsuffix): result;
+    public function send_template(
+        string $phone,
+        string $template,
+        string $lang,
+        array $params,
+        ?string $urlsuffix,
+        string $idempotencykey
+    ): result;
 
     /**
      * Checks that this transport could send something right now, without sending anything.
