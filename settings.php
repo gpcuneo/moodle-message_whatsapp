@@ -27,7 +27,6 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/message/output/whatsapp/message_output_whatsapp.php');
 
 if ($ADMIN->fulltree) {
-
     $settings->add(new admin_setting_heading(
         'message_whatsapp/generalsettings',
         new lang_string('generalsettings', 'message_whatsapp'),
@@ -77,5 +76,50 @@ if ($ADMIN->fulltree) {
         new lang_string('defaultcountry_desc', 'message_whatsapp'),
         \message_whatsapp\local\recipient::FALLBACK_COUNTRY,
         get_string_manager()->get_list_of_countries()
+    ));
+
+    $settings->add(new admin_setting_heading(
+        'message_whatsapp/deliverysettings',
+        new lang_string('deliverysettings', 'message_whatsapp'),
+        new lang_string('deliverysettings_desc', 'message_whatsapp')
+    ));
+
+    // A WhatsApp notification rings a phone that is often on a bedside table, so the quiet hours are on from the
+    // start. Nothing is discarded by them: a message caught by the window leaves as soon as the window closes.
+    $settings->add(new admin_setting_configcheckbox(
+        'message_whatsapp/quiethours',
+        new lang_string('quiethours', 'message_whatsapp'),
+        new lang_string('quiethours_desc', 'message_whatsapp'),
+        1
+    ));
+
+    $hours = [];
+    for ($hour = 0; $hour < 24; $hour++) {
+        $hours[$hour] = sprintf('%02d:00', $hour);
+    }
+
+    $settings->add(new admin_setting_configselect(
+        'message_whatsapp/quietstart',
+        new lang_string('quietstart', 'message_whatsapp'),
+        new lang_string('quietstart_desc', 'message_whatsapp'),
+        \message_whatsapp\local\queue::DEFAULT_QUIET_START,
+        $hours
+    ));
+
+    $settings->add(new admin_setting_configselect(
+        'message_whatsapp/quietend',
+        new lang_string('quietend', 'message_whatsapp'),
+        new lang_string('quietend_desc', 'message_whatsapp'),
+        \message_whatsapp\local\queue::DEFAULT_QUIET_END,
+        $hours
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'message_whatsapp/dailycap',
+        new lang_string('dailycap', 'message_whatsapp'),
+        new lang_string('dailycap_desc', 'message_whatsapp'),
+        0,
+        PARAM_INT,
+        5
     ));
 }

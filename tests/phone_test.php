@@ -39,7 +39,6 @@ use message_whatsapp\local\phone;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class phone_test extends \advanced_testcase {
-
     /**
      * Argentine numbers, the ones the plugin has hand written rules for.
      *

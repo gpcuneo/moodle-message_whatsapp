@@ -36,7 +36,6 @@ use core\task\scheduled_task;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class cleanup extends scheduled_task {
-
     /**
      * Returns the name of the task shown in the scheduled tasks administration page.
      *
@@ -52,7 +51,7 @@ class cleanup extends scheduled_task {
      * @return void
      */
     public function execute(): void {
-        // TODO: T3.3 implements this: delete the terminal queue rows, and their clicks, older than the retention
-        // setting.
+        // Left empty on purpose. T3.3 of docs/plan-desarrollo.md fills it in: delete the terminal
+        // queue rows, and their clicks, older than the retention setting.
     }
 }

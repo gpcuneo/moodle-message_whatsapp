@@ -42,7 +42,6 @@ use html_writer;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class preferences_form {
-
     /** Name of the hidden field that carries the user being edited. */
     public const FIELD_USERID = 'whatsapp_userid';
 

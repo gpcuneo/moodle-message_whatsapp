@@ -57,7 +57,6 @@ namespace message_whatsapp\local;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class template_mapper {
-
     /** @var string The only template of this release, registered in Meta as a UTILITY template. */
     public const TEMPLATE = 'moodle_notification';
 

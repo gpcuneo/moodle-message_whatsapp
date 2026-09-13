@@ -35,7 +35,6 @@ use message_whatsapp\local\recipient;
  * @covers     \message_whatsapp\local\recipient
  */
 final class recipient_test extends \advanced_testcase {
-
     /**
      * Every test starts from a site that looks numbers up in phone2 and assumes Argentina.
      *

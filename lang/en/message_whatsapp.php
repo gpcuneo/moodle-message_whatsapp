@@ -22,8 +22,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['dailycap'] = 'Daily limit per user';
+$string['dailycap_desc'] = 'Largest number of WhatsApp messages a single user may be sent in one day, counted in the time zone of the site. Anything over the limit is recorded as skipped and is never sent, so the limit trades notifications for cost: leave it at 0 for no limit.';
 $string['defaultcountry'] = 'Default country';
 $string['defaultcountry_desc'] = 'Country whose dialling rules apply to a number typed without an international prefix. A number that already starts with + is never touched by this setting.';
+$string['deliverysettings'] = 'Delivery';
+$string['deliverysettings_desc'] = 'When the queue is allowed to send, and how much it may send. Nothing here changes what is sent, only when.';
 $string['generalsettings'] = 'WhatsApp notifications';
 $string['generalsettings_desc'] = 'Sends Moodle notifications to WhatsApp as approved message templates, through a queue.';
 $string['mode'] = 'Sending mode';
@@ -44,6 +48,12 @@ $string['prefphone_desc'] = 'Mobile number in international format, for example 
 $string['prefphoneinvalid'] = 'The last number entered was not understood and has not been saved. Type it with the area code, for example 011 15 1234-5678.';
 $string['prefphonelandline'] = 'This number looks like a landline, and WhatsApp cannot deliver to a landline. If it is a mobile, type it again with the 15 after the area code, as in 011 15 1234-5678, or in international format with the 9, as in +54 9 11 1234-5678.';
 $string['privacy:metadata'] = 'The WhatsApp message processor does not store any personal data.';
+$string['quietend'] = 'Quiet hours end';
+$string['quietend_desc'] = 'Hour messages may be sent again from, in the time zone of the site.';
+$string['quiethours'] = 'Respect quiet hours';
+$string['quiethours_desc'] = 'Hold messages that come up during the night and send them when the quiet hours end. Nothing is discarded: a notification caught by the window leaves as soon as the window closes.';
+$string['quietstart'] = 'Quiet hours start';
+$string['quietstart_desc'] = 'Hour from which messages stop being sent, in the time zone of the site. A start and an end at the same hour mean no quiet hours at all.';
 $string['sitenameshort'] = 'Short site name';
 $string['sitenameshort_desc'] = 'Name of this site as it appears in the WhatsApp message. Leave it empty to use the short name of the site.';
 $string['task:cleanup'] = 'Delete old WhatsApp queue entries';

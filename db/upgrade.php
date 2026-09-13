@@ -22,7 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Upgrade the database of the plugin.
@@ -36,7 +35,6 @@ function xmldb_message_whatsapp_upgrade($oldversion) {
     $dbman = $DB->get_manager();
 
     if ($oldversion < 2026091201) {
-
         // Define table message_whatsapp_user to be created.
         $table = new xmldb_table('message_whatsapp_user');
 
@@ -124,6 +122,20 @@ function xmldb_message_whatsapp_upgrade($oldversion) {
 
         // Whatsapp savepoint reached.
         upgrade_plugin_savepoint(true, 2026091201, 'message', 'whatsapp');
+    }
+
+    if ($oldversion < 2026091302) {
+        // Define field lang to be added to message_whatsapp_queue.
+        $table = new xmldb_table('message_whatsapp_queue');
+        $field = new xmldb_field('lang', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, null, 'templatekey');
+
+        // Conditionally launch add field lang.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Whatsapp savepoint reached.
+        upgrade_plugin_savepoint(true, 2026091302, 'message', 'whatsapp');
     }
 
     return true;

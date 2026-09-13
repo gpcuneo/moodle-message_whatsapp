@@ -36,6 +36,7 @@
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Course the notification belongs to, 0 when it is site wide."/>
         <FIELD NAME="phone" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="Destination in E.164, copied at enqueue time so that a later profile change does not rewrite history."/>
         <FIELD NAME="templatekey" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Name of the approved template used for this message."/>
+        <FIELD NAME="lang" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="Language version of the template, frozen at enqueue time: the send path has no userto, and a profile language change between enqueue and send could point at a template version Meta never approved."/>
         <FIELD NAME="params" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON encoded list of the sanitised template parameters."/>
         <FIELD NAME="url" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Target of the template button, normally the contexturl of the event."/>
         <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pending" SEQUENCE="false" COMMENT="pending, sending, sent, delivered, read, failed or skipped."/>

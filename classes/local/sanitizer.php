@@ -46,7 +46,6 @@ namespace message_whatsapp\local;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class sanitizer {
-
     /** @var string Marker appended to a value that had to be cut. Counts as one character towards the limit. */
     protected const ELLIPSIS = '…';
 

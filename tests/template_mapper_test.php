@@ -43,7 +43,6 @@ use message_whatsapp\local\template_mapper;
  * @covers     \message_whatsapp\local\mapped
  */
 final class template_mapper_test extends \advanced_testcase {
-
     /**
      * Builds the event data of a notification the way core hands it to a processor: a plain stdClass.
      *
@@ -454,8 +453,11 @@ final class template_mapper_test extends \advanced_testcase {
     public function test_params_respect_the_limits_and_the_forbidden_characters(): void {
         $this->resetAfterTest();
 
-        set_config('sitename_short', "Instituto\n\tDemo    de    Prueba de un nombre demasiado largo para caber",
-            'message_whatsapp');
+        set_config(
+            'sitename_short',
+            "Instituto\n\tDemo    de    Prueba de un nombre demasiado largo para caber",
+            'message_whatsapp'
+        );
 
         $eventdata = $this->eventdata([
             'component' => 'mod_forum',

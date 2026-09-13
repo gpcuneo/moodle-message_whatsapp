@@ -51,7 +51,6 @@ namespace message_whatsapp\local;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class phone {
-
     /** @var string Calling code of Argentina, the only country with hand written rules. */
     private const AR_CALLING_CODE = '54';
 

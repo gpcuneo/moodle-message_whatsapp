@@ -35,7 +35,6 @@ use message_whatsapp\local\sanitizer;
  * @covers     \message_whatsapp\local\sanitizer
  */
 final class sanitizer_test extends \advanced_testcase {
-
     /**
      * HTML that has to end up as flat text, with no markup and no leftover entity.
      *

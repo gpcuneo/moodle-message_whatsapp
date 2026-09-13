@@ -37,7 +37,6 @@ use core\task\scheduled_task;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class sync_status extends scheduled_task {
-
     /**
      * Returns the name of the task shown in the scheduled tasks administration page.
      *
@@ -53,7 +52,8 @@ class sync_status extends scheduled_task {
      * @return void
      */
     public function execute(): void {
-        // TODO: T4.4 implements this: in gateway mode, read the cursor from the plugin configuration, ask the
-        // gateway for the status changes since that cursor, update the queue by providermsgid and save the cursor.
+        // Left empty on purpose. T4.4 of docs/plan-desarrollo.md fills it in: in gateway mode, read
+        // the cursor from the plugin configuration, ask the gateway for the status changes since that
+        // cursor, update the queue by providermsgid and save the cursor.
     }
 }

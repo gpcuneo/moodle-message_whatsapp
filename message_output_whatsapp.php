@@ -27,6 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/message/output/lib.php');
 
 use message_whatsapp\form\preferences_form;
+use message_whatsapp\local\queue;
 use message_whatsapp\local\recipient;
 
 /**
@@ -45,7 +46,6 @@ use message_whatsapp\local\recipient;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class message_output_whatsapp extends message_output {
-
     /** Direct mode: the site owns its Meta Cloud API credentials and talks to Graph API. */
     const MODE_DIRECT = 'direct';
 
@@ -53,16 +53,45 @@ class message_output_whatsapp extends message_output {
     const MODE_GATEWAY = 'gateway';
 
     /**
-     * Processes a message sent to this output.
+     * Processes a message sent to this output by writing it to the queue.
      *
-     * Always returns true so that a failure of this processor can never block the delivery of the same message
-     * through the other outputs the user has enabled.
+     * This runs inside the web request of whoever triggered the event, so it does three things and no more: it
+     * decides whether the message belongs on this channel at all, it writes one row, and it gets out of the way.
+     * There is no network access here, by design and by the architecture: talking to Meta from a page request would
+     * make an unrelated page as slow and as fragile as the Graph API is that minute.
+     *
+     * It returns true whatever happens, and it lets nothing escape. A false return would make core treat the
+     * message as undelivered, and an exception would break the page of the user that triggered the event, who has
+     * nothing to do with WhatsApp. The failure is written to the debug log instead, and only the message of the
+     * exception is written there, never its debug info: for a database error that would carry the SQL and its
+     * parameters, and one of those parameters is a phone number.
+     *
+     * Only notifications are queued. Personal messages between users are out of scope of this release: a template
+     * is a poor fit for a conversation, and everything sent has to be an approved template.
      *
      * @param stdClass $message The event data submitted by the message provider plus $message->savedmessageid.
      * @return bool Always true.
      */
     public function send_message($message) {
-        // Skeleton: the queue is not implemented yet, so the message is deliberately dropped here.
+        try {
+            if (!is_object($message) || (int) ($message->notification ?? 0) !== 1) {
+                return true;
+            }
+
+            // A site with no sending mode chosen cannot deliver anything, now or later, so queueing would only pile
+            // up rows nobody will ever drain. Core filters unconfigured processors out too; this is the second
+            // barrier, for the same reason the opt-in has one.
+            if (!$this->is_system_configured()) {
+                return true;
+            }
+
+            // Core builds this with get_eventobject_for_processor() and it is always a plain stdClass, but the
+            // signature of the parent declares the union, so anything else is flattened instead of trusted.
+            queue::enqueue($message instanceof stdClass ? $message : (object) get_object_vars($message));
+        } catch (Throwable $e) {
+            debugging('message_whatsapp: the notification could not be queued: ' . $e->getMessage(), DEBUG_NORMAL);
+        }
+
         return true;
     }
 

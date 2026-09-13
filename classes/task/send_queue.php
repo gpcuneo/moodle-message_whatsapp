@@ -37,7 +37,6 @@ use core\task\scheduled_task;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class send_queue extends scheduled_task {
-
     /**
      * Returns the name of the task shown in the scheduled tasks administration page.
      *
@@ -53,7 +52,8 @@ class send_queue extends scheduled_task {
      * @return void
      */
     public function execute(): void {
-        // TODO: T2.3 implements this: claim pending rows, send them through the transport, update their status,
-        // honour the quiet hours and the per user daily cap, and back off on transient errors.
+        // Left empty on purpose. T2.3 of docs/plan-desarrollo.md fills it in: claim pending rows,
+        // send them through the transport, update their status, honour the quiet hours and the per
+        // user daily cap, and back off on transient errors.
     }
 }

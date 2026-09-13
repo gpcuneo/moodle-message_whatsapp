@@ -22,8 +22,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['dailycap'] = 'Tope diario por usuario';
+$string['dailycap_desc'] = 'Cantidad máxima de mensajes de WhatsApp que puede recibir un mismo usuario en un día, contado en la zona horaria del sitio. Lo que pasa del tope queda registrado como omitido y no se envía nunca, así que el tope cambia notificaciones por costo: dejalo en 0 para no poner límite.';
 $string['defaultcountry'] = 'País por defecto';
 $string['defaultcountry_desc'] = 'País cuyas reglas de discado se aplican a un número escrito sin prefijo internacional. Un número que ya empieza con + no se ve afectado por esta opción.';
+$string['deliverysettings'] = 'Envío';
+$string['deliverysettings_desc'] = 'Cuándo puede enviar la cola y cuánto puede enviar. Nada de esto cambia qué se envía, solo cuándo.';
 $string['generalsettings'] = 'Notificaciones por WhatsApp';
 $string['generalsettings_desc'] = 'Envía las notificaciones de Moodle a WhatsApp como plantillas aprobadas, con una cola.';
 $string['mode'] = 'Modo de envío';
@@ -44,6 +48,12 @@ $string['prefphone_desc'] = 'Celular en formato internacional, por ejemplo +54 9
 $string['prefphoneinvalid'] = 'El último número que escribiste no se entendió y no se guardó. Escribilo con el código de área, por ejemplo 011 15 1234-5678.';
 $string['prefphonelandline'] = 'Este número parece un teléfono fijo, y WhatsApp no puede entregar a un fijo. Si es un celular, escribilo de nuevo con el 15 después del código de área, como 011 15 1234-5678, o en formato internacional con el 9, como +54 9 11 1234-5678.';
 $string['privacy:metadata'] = 'El procesador de mensajes de WhatsApp no almacena ningún dato personal.';
+$string['quietend'] = 'Fin del horario de silencio';
+$string['quietend_desc'] = 'Hora a partir de la cual se vuelve a enviar, en la zona horaria del sitio.';
+$string['quiethours'] = 'Respetar el horario de silencio';
+$string['quiethours_desc'] = 'Retiene los mensajes que surgen durante la noche y los envía cuando termina el horario de silencio. No se descarta nada: una notificación alcanzada por la franja sale apenas la franja termina.';
+$string['quietstart'] = 'Inicio del horario de silencio';
+$string['quietstart_desc'] = 'Hora a partir de la cual se deja de enviar, en la zona horaria del sitio. Un inicio y un fin en la misma hora significan que no hay horario de silencio.';
 $string['sitenameshort'] = 'Nombre corto del sitio';
 $string['sitenameshort_desc'] = 'Nombre de este sitio tal como aparece en el mensaje de WhatsApp. Dejalo vacío para usar el nombre corto del sitio.';
 $string['task:cleanup'] = 'Borrar las entradas viejas de la cola de WhatsApp';

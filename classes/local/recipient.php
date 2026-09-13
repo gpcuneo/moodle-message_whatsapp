@@ -43,7 +43,6 @@ use stdClass;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class recipient {
-
     /** Number taken from the phone1 field of the user profile. */
     public const SOURCE_PROFILE1 = 'profile1';
 

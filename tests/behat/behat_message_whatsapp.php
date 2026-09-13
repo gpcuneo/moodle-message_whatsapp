@@ -39,7 +39,6 @@ use Behat\Mink\Exception\ExpectationException;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class behat_message_whatsapp extends behat_base {
-
     /**
      * Checks the consent stored for a user.
      *

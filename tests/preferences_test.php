@@ -43,7 +43,6 @@ require_once($CFG->dirroot . '/message/output/whatsapp/message_output_whatsapp.p
  * @covers     \message_whatsapp\form\preferences_form
  */
 final class preferences_test extends \advanced_testcase {
-
     /**
      * Every test starts from a site that looks numbers up in phone2 and assumes Argentina.
      *
