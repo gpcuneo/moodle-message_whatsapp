@@ -76,6 +76,16 @@ everything below has been built and verified on Moodle 4.5 and 5.2.
   for both languages.
 - Tests: PHPUnit suite and Behat features, green on Moodle 4.5 and 5.2.
 
+### Fixed
+- **The template body no longer starts and ends with a variable.** Meta rejects those: *"The message template
+  cannot start or end with a parameter (dangling parameters are not allowed)"*
+  ([Template review](https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/template-review),
+  verified 13 September 2026). The body was `{{1}}: {{2}}` and `{{3}}`, which breaks the rule twice, so the
+  first submission to Meta would have been rejected. `docs/template.json` now has fixed text before `{{1}}` and
+  after `{{3}}` in both languages, and `README.md` no longer tells you to paste the old body into the WhatsApp
+  Manager form. No code changed: `local\template_mapper` supplies three parameters in order and never read the
+  wording around them, so a site is free to reword it — but not to remove it.
+
 ### Known limitations
 
 - **Gateway mode is not implemented.** The *Sending mode* setting offers it and choosing it reports

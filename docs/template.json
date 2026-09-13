@@ -23,6 +23,7 @@
     "parameter_format is set to POSITIONAL, which is also the default. If your Graph API version rejects the field, delete the line; nothing else changes.",
     "The example values are what Meta's reviewers read. They are not sent at runtime and never reach a recipient.",
     "The example of a URL button is the value of the variable alone, not the whole URL.",
+    "The body may not start or end with a variable. Meta calls these dangling parameters and rejects the template: \"The message template cannot start or end with a parameter\" (Template review, verified 13-sep-2026). That is why there is fixed text before {{1}} and after {{3}}. Reword it as you like, but do not remove it.",
     "A parameter value may not contain a newline, a tab or more than four consecutive spaces. The plugin strips all of them before sending; this note is here so that the example values you may edit stay legal too."
   ],
   "versions": {
@@ -34,7 +35,7 @@
       "components": [
         {
           "type": "BODY",
-          "text": "{{1}}: {{2}}\n{{3}}",
+          "text": "Tenés una novedad en {{1}}.\n\n{{2}}\n{{3}}\n\nEste es un aviso automático de tu aula virtual.",
           "example": {
             "body_text": [
               [
@@ -68,7 +69,7 @@
       "components": [
         {
           "type": "BODY",
-          "text": "{{1}}: {{2}}\n{{3}}",
+          "text": "You have an update in {{1}}.\n\n{{2}}\n{{3}}\n\nThis is an automated notice from your Moodle site.",
           "example": {
             "body_text": [
               [

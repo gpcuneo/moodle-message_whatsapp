@@ -34,10 +34,19 @@ namespace message_whatsapp\local;
  * The template of this release is the base one of the architecture:
  *
  * ```
- * Body:   {{1}}: {{2}}
+ * Body:   <fixed text> {{1}}.
+ *
+ *         {{2}}
  *         {{3}}
+ *
+ *         <fixed text>
  * Button: URL, fixed base plus the suffix the transport adds.
  * ```
+ *
+ * The fixed text around the variables is not decoration. Meta rejects a template whose body starts or ends with a
+ * variable — "The message template cannot start or end with a parameter (dangling parameters are not allowed)",
+ * Template review, verified 13-sep-2026 — and the body of `docs/template.json` is worded to satisfy that. Nothing
+ * here reads that wording, so a site may reword it; a site that deletes it gets the template rejected.
  *
  * so `params` is always a list of exactly three strings, in that order: short site name, subject and summary. A
  * later release maps `component`/`name` pairs onto different templates through an admin editable table; until then

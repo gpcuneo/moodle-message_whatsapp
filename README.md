@@ -236,7 +236,7 @@ The plugin sends one template, and it is not configurable:
 | Name | `moodle_notification` — exactly, lower case, with the underscore |
 | Category | **UTILITY** |
 | Languages | `es_AR` **and** `en` — both, even if your site is monolingual |
-| Body | Three variables, `{{1}}` `{{2}}` `{{3}}`, in that order |
+| Body | Three variables, `{{1}}` `{{2}}` `{{3}}`, in that order, with fixed text before the first and after the last |
 | Buttons | Exactly one, of type **URL**, with a variable at the end of the address |
 
 The three body variables are, in order:
@@ -275,8 +275,10 @@ detect this: check it before you submit.
 ### Creating it, either way
 
 **Through the dashboard** (easier the first time). In **WhatsApp Manager > Message templates > Create template**:
-name `moodle_notification`, category **Utility**, language **Spanish (ARG)**. Paste the body text
-`{{1}}: {{2}}` then a line break then `{{3}}`; fill the sample values Meta asks for. Add a button of type
+name `moodle_notification`, category **Utility**, language **Spanish (ARG)**. Paste the body text of
+`versions.es_AR` from [`docs/template.json`](docs/template.json), exactly as it is there; fill the sample values
+Meta asks for. Do not trim it down to `{{1}}: {{2}}` and `{{3}}`: Meta rejects a body that starts or ends with a
+variable. Add a button of type
 **Visit website**, **Dynamic**, label `Ver en Moodle`, address as above. Submit. Then **Add language** and repeat
 the whole thing for **English**, with label `View in Moodle`.
 
@@ -297,8 +299,13 @@ exist, or exists in only one language, fails once per notification with Meta err
 
 ### What you may change, and what you may not
 
-Safe to change: the wording around the variables, the label of the button, the sample values, and the addition
-of fixed text before `{{1}}` or after `{{3}}`. The plugin never reads any of it.
+Safe to change: the wording around the variables, the label of the button and the sample values. The plugin
+never reads any of it.
+
+**But there must be fixed text before `{{1}}` and after `{{3}}`.** Meta rejects a template whose body starts or
+ends with a variable — *"The message template cannot start or end with a parameter (dangling parameters are not
+allowed)"*, [Template review](https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/template-review).
+The body in `docs/template.json` already satisfies this. Reword it if you like; do not delete it.
 
 Not safe to change, because the plugin's requests would stop matching the template: the name, the two language
 codes, the number of body variables (three) or their order, and the presence of the URL button. The plugin sends
