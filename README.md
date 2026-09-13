@@ -559,9 +559,10 @@ cannot be edited into a different one.
 ## Development
 
 The development environment (Moodle 4.5 and 5.2 in Docker), the architecture document and the task plan live in
-the parent workspace. Continuous integration runs
-[moodle-plugin-ci](https://github.com/moodlehq/moodle-plugin-ci) on both supported branches against PostgreSQL
-and MariaDB: `phplint`, `phpcs`, `phpdoc`, `validate`, `savepoints`, `mustache`, `grunt`, `phpunit` and `behat`.
+the parent workspace. The checks are the ones
+[moodle-plugin-ci](https://github.com/moodlehq/moodle-plugin-ci) defines —`phplint`, `phpcs`, `phpdoc`,
+`validate`, `savepoints`, `mustache`, `grunt`, `phpunit` and `behat`— run from that environment on both
+supported branches against PostgreSQL and MariaDB. There is no hosted CI: nothing runs on push.
 
 For Behat and for manual testing there is `$CFG->message_whatsapp_fake_transport = true`, which replaces the
 transport with an in-memory one that sends nothing. The test page shows a warning in yellow while it is on, so
