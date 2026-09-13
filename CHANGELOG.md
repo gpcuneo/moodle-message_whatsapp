@@ -11,6 +11,12 @@ The plugin now sends end to end in direct mode. The version number of the releas
 everything below has been built and verified on Moodle 4.5 and 5.2.
 
 ### Added
+- **Gateway mode.** `transport\gateway` sends through the wa-gateway service with an API key instead of Meta
+  credentials: `POST /v1/messages` with `Idempotency-Key` set to the queue row id, so a retried row answers the
+  same message id instead of reaching the recipient twice, and `POST /v1/check` behind the *Test connection*
+  button. `task\sync_status` pulls the delivery statuses every five minutes by cursor, because nothing can be
+  pushed at a site the service cannot reach, and stores the cursor in the plugin configuration. Settings
+  *Service address* and *API key*.
 
 - **Database.** Three tables: `message_whatsapp_user` (phone number, its source, opt-in and its timestamp,
   verification, status), `message_whatsapp_queue` (one row per notification: recipient, phone, template, its

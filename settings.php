@@ -186,6 +186,37 @@ if ($ADMIN->fulltree) {
         8
     ));
 
+    // Credentials of gateway mode. Shown whichever mode is selected, for the same reason the Meta ones are:
+    // an administrator fills them in before the mode works, and the one screen that explains the channel should
+    // not hide why the other mode is not usable yet.
+    $settings->add(new admin_setting_heading(
+        'message_whatsapp/gatewaysettings',
+        new lang_string('gatewaysettings', 'message_whatsapp'),
+        new lang_string('gatewaysettings_desc', 'message_whatsapp')
+    ));
+
+    // PARAM_URL and not PARAM_TEXT: the API key travels on every request made to this address, so a value that
+    // is not a URL must not be stored. The transport checks the scheme and the host again before calling it,
+    // because a setting can also be written by a CLI or by a restore.
+    $settings->add(new admin_setting_configtext(
+        'message_whatsapp/gatewayurl',
+        new lang_string('gatewayurl', 'message_whatsapp'),
+        new lang_string('gatewayurl_desc', 'message_whatsapp'),
+        '',
+        PARAM_URL,
+        40
+    ));
+
+    // The unmasking password field, like the secrets of direct mode: the value is stored in the clear either way
+    // -- the site has to send it to the gateway -- so what the widget buys is that a key is not left on screen
+    // behind an administrator, on a projector or in a screenshot of a support ticket.
+    $settings->add(new admin_setting_configpasswordunmask(
+        'message_whatsapp/gatewayapikey',
+        new lang_string('gatewayapikey', 'message_whatsapp'),
+        new lang_string('gatewayapikey_desc', 'message_whatsapp'),
+        ''
+    ));
+
     $settings->add(new admin_setting_heading(
         'message_whatsapp/recipientsettings',
         new lang_string('recipientsettings', 'message_whatsapp'),

@@ -71,8 +71,8 @@ Being explicit, because these are the things people assume:
   for messages about something the person already has with you.
 - **It does not reach the Moodle mobile app**, and it is not an alternative to email: it is an additional output
   that each user turns on for themselves.
-- **The gateway mode is not usable yet.** The *Sending mode* setting offers "Gateway", and choosing it today
-  reports `not_available`. Only **Direct** mode works in this release. Everything below is direct mode.
+- **It does not verify who is on the other end of a number.** See above: the phone number is whatever the
+  profile says.
 
 ---
 
@@ -90,6 +90,24 @@ Being explicit, because these are the things people assume:
 The Moodle site has to be reachable from the internet for two reasons: Meta posts delivery reports to
 `webhook.php`, and the button in the message opens `go.php`. A Moodle on `localhost` can send, but nothing will
 come back and no button will work.
+
+### The two sending modes
+
+The *Sending mode* setting picks which of the two the site uses, and it is the only difference between them:
+everything else -- the opt-in, the phone numbers, the queue, the retries, the report -- is the same code.
+
+| | **Direct** | **Gateway** |
+|---|---|---|
+| What you need | A Meta app, a WhatsApp Business Account, a phone number and an approved template | The address of a gateway service and one API key |
+| Who holds the WhatsApp account | You | The service |
+| Who gets the template approved | You | The service |
+| Delivery reports arrive | Pushed by Meta to `webhook.php` | Pulled from the service every five minutes |
+| What Meta bills you | Your own conversations | Nothing: the service bills you |
+| The button in the message opens | `go.php` of this site | A short link of the service, which lands on `go.php` of this site |
+
+The requirements table above is direct mode. **Gateway mode needs neither a Meta account nor a public
+webhook**, because nothing is pushed at the site: the two settings under *Gateway service* are the whole of the
+configuration, and the *Test connection* button tells you whether the key works.
 
 ## Install
 
@@ -131,6 +149,35 @@ What you will end up with, and where each piece goes in Moodle:
 | Permanent access token | *Access token* |
 | App secret | *App secret* |
 | A string you invent yourself | *Webhook verify token*, and the same string in Meta |
+
+## Gateway mode, in two settings
+
+If you are using a gateway service instead of your own Meta account, **steps 1 to 8 below are not yours to do**
+— the service did them. Skip to this, and then to step 9.
+
+1. *Site administration → Plugins → Message outputs → WhatsApp*.
+2. **Sending mode**: Gateway.
+3. **Service address**: the base address the service gave you, for example `https://wa.example.com`. Nothing
+   after the host; the plugin adds the paths.
+4. **API key**: the key the service issued for this site. It is shown once when the subscription is created and
+   cannot be read back, so if it is lost you ask for a new one.
+5. Save, then open *Test connection*. It asks the service who the key belongs to and sends nothing. Three
+   answers are worth knowing:
+
+   | Answer | What it means |
+   |---|---|
+   | `invalid_api_key` | The key is wrong, or it was revoked. Check what you pasted. |
+   | `tenant_suspended` | The key is right and the subscription is not active. It is a billing matter, not a configuration one. |
+   | `blocked_by_site` | Moodle refused to make the call. See below. |
+
+**If the service is on a private address**, for instance on the same network as the Moodle, Moodle blocks the
+request before it leaves: *Site administration → General → Security → HTTP security* blocks the loopback address
+and the private ranges by default, which is what stops a plugin from being used to reach the inside of your
+network. Allow the host there. A service on a public address needs none of this.
+
+The rest of the plugin behaves exactly as it does in direct mode, with two differences you will notice: the
+*Meta Cloud API credentials* section is not used and can stay empty, and delivery statuses appear a few minutes
+later than in direct mode, because the site fetches them every five minutes instead of Meta pushing them.
 
 ## 1. Business portfolio, app and WhatsApp Business Account
 
@@ -498,7 +545,7 @@ of each message it sent them: the template used, the three parameters, the desti
 message id, and the error if there was one. It also records a row when a button is tapped.
 
 It ships a complete Privacy API provider: a subject access request exports all of it, and a deletion request
-removes it. Meta, and the gateway service when that mode exists, are declared as external locations, because
+removes it. Meta and the gateway service are declared as external locations, because
 that is what they are — the text of the notification and the phone number leave your server.
 
 Finished rows are deleted after `retention` days (90 by default) by a daily task.
