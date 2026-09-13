@@ -50,8 +50,8 @@ use stdClass;
  *
  * The statuses are those of the architecture: `pending` is waiting, `sending` is claimed by a task run, `sent` was
  * accepted by the provider, `delivered` and `read` come back from a webhook, `failed` gave up and `skipped` was
- * never attempted (no consent, or over the daily cap). Only the first two are touched here; the delivery reports
- * arrive with the transports.
+ * never attempted (no consent, or over the daily cap). {@see self::update_by_providermsgid()} is the door the
+ * delivery reports come in through, and it only ever moves a row forward.
  *
  * The phone number is personal data: it is copied into the row at enqueue time so that a later profile change does
  * not rewrite history, and it is never written to a log or to an exception message.
@@ -116,6 +116,27 @@ class queue {
 
     /** Longest error text kept in a row; a provider can answer with a whole HTML page. */
     protected const MAX_ERROR_LENGTH = 1000;
+
+    /** Length of the `pricingcategory` column, in characters. */
+    protected const MAX_PRICING_CATEGORY_LENGTH = 40;
+
+    /** Hexadecimal characters of signature carried by a click token; 128 bits is far more than this needs. */
+    protected const CLICK_TOKEN_SIGNATURE_LENGTH = 32;
+
+    /**
+     * The delivery statuses a provider reports, and how far along they are.
+     *
+     * The order is what {@see self::supersedes()} compares, and it is the whole of the out of order policy: a
+     * message that was accepted is `sent`, one that never made it to the phone is `failed`, and `delivered` and
+     * `read` are proof that it did arrive, so they outrank a failure. A status missing from this list, which is
+     * what `pending`, `sending` and `skipped` are, ranks below all of them.
+     */
+    protected const PROVIDER_STATUS_ORDER = [
+        self::STATUS_SENT => 1,
+        self::STATUS_FAILED => 2,
+        self::STATUS_DELIVERED => 3,
+        self::STATUS_READ => 4,
+    ];
 
     /**
      * Puts one notification on the queue and returns the id of the row it created.
@@ -361,6 +382,139 @@ class queue {
             'nextattempt' => 0,
             'timestatus' => time(),
         ]);
+    }
+
+    /**
+     * Writes a delivery status that the provider reported for a message this site already sent.
+     *
+     * The row is found by the message id the provider handed back when it accepted the message, because that is
+     * the only thing of ours a delivery report carries. It does carry the destination number, and matching on
+     * that is exactly what must not happen: it is personal data, several rows share it, and it would let anyone
+     * who knows a number address a row of somebody else's history.
+     *
+     * Reports arrive repeated and out of order. Meta retries a webhook it did not get a 200 for, and the
+     * `delivered` and the `read` of one message are two separate deliveries that can cross on the wire. So a
+     * report is written only when it is strictly ahead of what the row already says, in the order fixed by
+     * {@see self::PROVIDER_STATUS_ORDER}: a repeat changes nothing, and a `delivered` that lands after a `read`
+     * leaves the `read` where it is instead of walking the row backwards. The alternative, writing whatever
+     * arrived last, makes the administrator report disagree with what happened for no gain at all.
+     *
+     * @param string $providermsgid Message id as the provider returned it when it accepted the message.
+     * @param string $status One of `sent`, `failed`, `delivered` or `read`. Anything else is ignored.
+     * @param int $time Moment the provider reported the change at, or 0 for the current time.
+     * @param string|null $pricingcategory Billing category the report carried, when it carried one.
+     * @param string|null $error Diagnostic of a failure. Never contains the phone number or the message text.
+     * @return bool True when at least one row was moved forward, false when there was nothing to move.
+     */
+    public static function update_by_providermsgid(
+        string $providermsgid,
+        string $status,
+        int $time = 0,
+        ?string $pricingcategory = null,
+        ?string $error = null
+    ): bool {
+        global $DB;
+
+        if ($providermsgid === '' || !isset(self::PROVIDER_STATUS_ORDER[$status])) {
+            return false;
+        }
+
+        $now = $time > 0 ? $time : time();
+        $rows = $DB->get_records(self::TABLE, ['providermsgid' => $providermsgid], 'id ASC', 'id, status');
+        $applied = false;
+
+        foreach ($rows as $row) {
+            if (!self::supersedes($status, (string) $row->status)) {
+                continue;
+            }
+
+            $update = (object) [
+                'id' => $row->id,
+                'status' => $status,
+                'timestatus' => $now,
+            ];
+
+            if ($pricingcategory !== null && $pricingcategory !== '') {
+                $update->pricingcategory = \core_text::substr($pricingcategory, 0, self::MAX_PRICING_CATEGORY_LENGTH);
+            }
+
+            if ($error !== null && $error !== '') {
+                $update->error = self::trim_error($error);
+            }
+
+            $DB->update_record(self::TABLE, $update);
+            $applied = true;
+        }
+
+        return $applied;
+    }
+
+    /**
+     * Tells whether a delivery status just reported is ahead of the one a row already carries.
+     *
+     * Pure: both statuses are parameters and the order is a constant, so the rule can be argued about without a
+     * row. Anything the providers do not report, and anything unknown, ranks below everything they do.
+     *
+     * @param string $status Status the provider just reported.
+     * @param string $current Status the row carries now.
+     * @return bool True when the reported status is strictly further along than the current one.
+     */
+    public static function supersedes(string $status, string $current): bool {
+        return (self::PROVIDER_STATUS_ORDER[$status] ?? 0) > (self::PROVIDER_STATUS_ORDER[$current] ?? 0);
+    }
+
+    /**
+     * Returns the token that names a queue row in the link of its template button.
+     *
+     * The link on a WhatsApp template button is public: it travels through Meta, it sits in a chat, and anyone who
+     * has it can open it. So it may not be a bare row id, which would let anyone walk the queue of the site by
+     * counting. The token is the id plus a signature of that id under `siteidentifier`, a per site secret that
+     * never leaves the database, so a token cannot be made up and cannot be edited to point at another row.
+     *
+     * It lives here, and not in `go.php`, because the sending side needs it too: the button of the template is
+     * built with this token as its URL suffix, and `go.php` is a script that cannot be loaded from a class.
+     *
+     * @param int $id Id of the queue row.
+     * @return string Token, safe to put in a URL as it is.
+     */
+    public static function click_token(int $id): string {
+        return $id . '.' . self::click_signature($id);
+    }
+
+    /**
+     * Returns the queue row a click token names, or 0 when the token was not made by this site.
+     *
+     * The comparison is {@see hash_equals()} and not `===` on purpose: the caller is an unauthenticated endpoint,
+     * and a comparison that returns as soon as two bytes differ tells whoever is guessing how much of the
+     * signature they already have right.
+     *
+     * @param string $token Token as it arrived in the request. Hostile until this returns.
+     * @return int Id of the queue row, or 0 when the token is malformed or the signature does not match.
+     */
+    public static function queueid_from_click_token(string $token): int {
+        $parts = explode('.', $token, 2);
+
+        if (count($parts) !== 2 || !preg_match('/^[1-9][0-9]{0,15}$/', $parts[0])) {
+            return 0;
+        }
+
+        $id = (int) $parts[0];
+
+        return hash_equals(self::click_signature($id), $parts[1]) ? $id : 0;
+    }
+
+    /**
+     * Signs a queue row id with the secret of this site.
+     *
+     * @param int $id Id of the queue row.
+     * @return string Signature, in hexadecimal.
+     */
+    protected static function click_signature(int $id): string {
+        global $CFG;
+
+        $mac = hash_hmac('sha256', self::TABLE . ':' . $id, (string) $CFG->siteidentifier);
+
+        return substr($mac, 0, self::CLICK_TOKEN_SIGNATURE_LENGTH);
     }
 
     /**
