@@ -41,6 +41,20 @@ $ADMIN->add('messaging', new admin_externalpage(
     'message/whatsapp:managesettings'
 ));
 
+// The delivery report is registered for the same reason and at the same depth, but behind a different capability:
+// reading what was sent and re-queueing what failed is operations work, and it should not need the capability
+// that hands out the credentials of the site. Note that today this registration only ever runs for somebody who
+// already holds `moodle/site:config`, because `admin/settings/messaging.php` and
+// `\core\plugininfo\message::load_settings()` both refuse to include the settings of a message processor for
+// anybody else, so `message/whatsapp:viewlog` on its own does not yet get a person to this page. That is written
+// up in `docs/decisiones-pendientes.md` and is not something this file can fix.
+$ADMIN->add('messaging', new admin_externalpage(
+    'message_whatsapp_log',
+    new lang_string('logpage', 'message_whatsapp'),
+    new moodle_url('/message/output/whatsapp/report.php'),
+    'message/whatsapp:viewlog'
+));
+
 if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_heading(
         'message_whatsapp/generalsettings',
@@ -69,6 +83,16 @@ if ($ADMIN->fulltree) {
             'testpage_desc',
             'message_whatsapp',
             (new moodle_url('/message/output/whatsapp/test.php'))->out()
+        )
+    ));
+
+    $settings->add(new admin_setting_description(
+        'message_whatsapp/logpagelink',
+        new lang_string('logpage', 'message_whatsapp'),
+        new lang_string(
+            'logpage_desc',
+            'message_whatsapp',
+            (new moodle_url('/message/output/whatsapp/report.php'))->out()
         )
     ));
 
