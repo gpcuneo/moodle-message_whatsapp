@@ -241,7 +241,7 @@ class send_queue extends scheduled_task {
      * The category arrives later with the delivery status, by webhook in direct mode and by the status cursor in
      * gateway mode, and it is written by whoever handles that.
      *
-     * @param int $id Id of the queue row.
+     * @param stdClass $row The queue row the answer belongs to.
      * @param result $result What the transport answered.
      * @return string One of the OUTCOME_* constants.
      */

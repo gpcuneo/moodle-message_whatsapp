@@ -82,6 +82,7 @@ final class unconfigured implements transport_interface {
      * @param string $lang Ignored.
      * @param string[] $params Ignored.
      * @param string|null $urlsuffix Ignored.
+     * @param string $idempotencykey Ignored: nothing is sent, so there is nothing to send twice.
      * @return result The permanent failure this transport was built with.
      */
     public function send_template(

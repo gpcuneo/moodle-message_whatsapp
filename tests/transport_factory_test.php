@@ -181,7 +181,7 @@ final class transport_factory_test extends \advanced_testcase {
      * This is the seam the factory leaves open: a transport is added by naming its class in the registry, and a
      * test gets one by overriding the registry rather than by adding a class to production code.
      *
-     * @param array<string, string> $registry Mode mapped to the class that implements it.
+     * @param array $registry Mode mapped to the class that implements it.
      * @param string $fakeclass Class the fake transport flag has to point at.
      * @return factory A factory that answers with that registry.
      */

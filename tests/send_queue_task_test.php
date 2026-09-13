@@ -520,8 +520,8 @@ final class send_queue_task_test extends \advanced_testcase {
      * allow a second named class here, and a double under `classes/` would be production code that exists only
      * for a test.
      *
-     * @param array<int, result|\Throwable> $script What to answer, keyed by the id of the queue row. A row that
-     *      is not in the script is accepted, which keeps the tests that are not about failures short.
+     * @param array $script A result or a throwable to answer, keyed by the id of the queue row. A row that is
+     *      not in the script is accepted, which keeps the tests that are not about failures short.
      * @return transport_interface The double, which also records every call it was given.
      */
     private function transport_double(array $script): transport_interface {
@@ -532,7 +532,7 @@ final class send_queue_task_test extends \advanced_testcase {
             /**
              * Builds the double.
              *
-             * @param array<int, result|\Throwable> $script What to answer, keyed by the id of the queue row.
+             * @param array $script What to answer, keyed by the id of the queue row.
              */
             public function __construct(
                 /** @var array<int, result|\Throwable> What to answer, keyed by the id of the queue row. */

@@ -429,8 +429,7 @@ final class meta_cloud implements transport_interface {
     /**
      * Builds the URL of the business phone number, which every call of this transport hangs off.
      *
-     * @param array{token: string, phoneid: string, version: string} $config Credentials as {@see self::config()}
-     *      returned them.
+     * @param array $config Credentials as {@see self::config()} returned them: `token`, `phoneid` and `version`.
      * @return string Absolute URL of the phone number object.
      */
     private static function endpoint(array $config): string {
