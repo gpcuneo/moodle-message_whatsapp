@@ -7,6 +7,74 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+The plugin now sends end to end in direct mode. The version number of the release is set when it is tagged;
+everything below has been built and verified on Moodle 4.5 and 5.2.
+
+### Added
+
+- **Database.** Three tables: `message_whatsapp_user` (phone number, its source, opt-in and its timestamp,
+  verification, status), `message_whatsapp_queue` (one row per notification: recipient, phone, template, its
+  language, parameters, destination URL, status, attempts, provider message id, error, pricing category) and
+  `message_whatsapp_click`. Installed by `install.xml` and upgraded with savepoints.
+- **Phone numbers.** `local\phone`: normalisation to E.164 with a default country setting, including the
+  Argentine mobile rules (`+549`, area code, the dropped `15`).
+- **Sanitiser.** `local\sanitizer`: turns Moodle message content into a string Meta accepts as a template
+  parameter. Strips newlines, tabs, control characters and runs of spaces, converts HTML to plain text through
+  core, cuts on characters rather than bytes.
+- **Recipient and opt-in.** `local\recipient` resolves a user into a phone number and a consent, reading the
+  profile field named by `phonesource` the first time. `form\preferences_form` adds the phone field and the
+  opt-in checkbox to the notification preferences of each user. Nothing is sent without both.
+- **Queue.** `local\queue`: enqueue, claim with a status lock, exponential backoff to five attempts, quiet
+  hours, daily cap per user, delivery status that only ever moves forward, and the signed click token used by
+  the button of the template.
+- **Template mapping.** `local\template_mapper` maps any notification onto the `moodle_notification` template:
+  three body parameters in order (short site name, subject, summary), the language version chosen from the
+  recipient's own language, and the destination URL. `local\mapped` is the value object it returns.
+- **Transports.** `transport\transport_interface` and `transport\result`; `transport\meta_cloud`, which talks
+  to the Graph API directly, with a classification of every Cloud API error code into permanent and retryable;
+  `transport\factory`, `transport\unconfigured` (a transport that refuses and says why) and `transport\fake`
+  (in memory, for Behat and manual testing).
+- **Scheduled tasks.** `send_queue` every minute, `sync_status` every five minutes (gateway mode only),
+  `cleanup` daily.
+- **Webhook.** `webhook.php`: GET answers Meta's verification challenge, POST validates the
+  `X-Hub-Signature-256` HMAC of the raw body against the app secret before doing anything at all, and applies
+  the delivery status to the queue row. Anything it does not understand is answered 200.
+- **Click redirection.** `go.php`: takes the signed token from the button, records the click and redirects. The
+  destination comes from the queue row and must start with `wwwroot`, so it is not an open redirect.
+- **Administration.** Sixteen settings in six blocks (mode, Meta credentials, recipients, template, sending,
+  retention), with the three secrets in masked fields, and the webhook URL printed ready to paste into Meta. A
+  *Test WhatsApp* page with *Test connection*, which asks Meta whether the credentials work without sending
+  anything, and *Send a test to my number*, which queues a real notification.
+- **Delivery report.** A reportbuilder system report at `report.php`, listing every notification the plugin
+  handled with its status, attempts and error, filterable by status, recipient, component and date, with a
+  retry action on failed rows. Behind `message/whatsapp:viewlog`, so a manager can read it without holding
+  the capability that hands out the site's credentials.
+- **Capabilities.** `message/whatsapp:managesettings`, `message/whatsapp:viewlog`,
+  `message/whatsapp:optinusers`.
+- **Privacy.** A full Privacy API provider: exports and deletes the three tables by user, and declares Meta as
+  an external location.
+- **Documentation.** `README.md` rewritten as a complete setup guide: creating the Meta app, the exact token
+  permissions, creating the `moodle_notification` template with your own domain in the button, the webhook, how
+  a user opts in, the error codes, and how Meta bills. `docs/template.json` holds the exact template definition
+  for both languages.
+- Tests: PHPUnit suite and Behat features, green on Moodle 4.5 and 5.2.
+
+### Known limitations
+
+- **Gateway mode is not implemented.** The *Sending mode* setting offers it and choosing it reports
+  `not_available`.
+- **The Meta test phone number reaches five recipients only.** A sixth receives nothing, with no error. A real
+  pilot needs an own number and Meta's business verification.
+- No phone number verification (no one time code). A wrong number fails silently or reaches a stranger.
+- An undeliverable number (Meta error 131026) is written off for that message but is not marked invalid on the
+  user's record, so the next notification for that person fails the same way. The number has to be corrected
+  by hand.
+- No inbound: a reply typed in WhatsApp goes nowhere.
+- Personal messages between users are not sent; only notifications.
+- One template for every notification. A per component template map is not implemented.
+- `adminoptin` of the architecture is not implemented: there is no way for an administrator to opt other people
+  in.
+
 ## [0.1.0-alpha] - 2026-09-12
 
 Plugin skeleton. The plugin installs and is visible in the messaging settings, but it does not send anything.

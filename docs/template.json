@@ -1,0 +1,98 @@
+{
+  "_about": "Definition of the one message template that message_whatsapp sends. Everything outside the 'versions' object is documentation and must not be sent to Meta. Each entry of 'versions' is a complete request body for POST https://graph.facebook.com/<graph-version>/<waba-id>/message_templates: one call per language. See README.md, section 'Create the template'.",
+  "_plugin": "message_whatsapp",
+  "_must_match": "The plugin builds every message from this template. Three things in it are a contract with the code and cannot be changed: the template name, the number and order of the body variables, and the presence of exactly one URL button whose variable is the last thing in the URL. The wording of the body, the label of the button and the example values are yours to change.",
+  "_contract": {
+    "template_name": "moodle_notification (message_whatsapp\\local\\template_mapper::TEMPLATE)",
+    "languages": [
+      "es_AR (template_mapper::LANG_ES, used for any recipient whose language starts with 'es')",
+      "en (template_mapper::LANG_EN, used for every other recipient)"
+    ],
+    "category": "UTILITY",
+    "body_variables": [
+      "{{1}} short site name, at most 60 characters (template_mapper::MAX_SITE)",
+      "{{2}} subject of the notification, at most 60 characters (template_mapper::MAX_SUBJECT)",
+      "{{3}} one line summary, at most 160 characters (template_mapper::MAX_SUMMARY)"
+    ],
+    "body_variable_count": 3,
+    "buttons": "Exactly one, of type URL, at index 0. The plugin always sends a button component, so a template without one is rejected by Meta with error 132000.",
+    "button_url_base": "REPLACE https://moodle.example.edu WITH YOUR OWN MOODLE ADDRESS. The base is the value of $CFG->wwwroot followed by /message/output/whatsapp/go.php?t= and it is frozen at approval time: only the part after t= travels with each message.",
+    "button_url_suffix": "A signed queue row token produced by message_whatsapp\\local\\queue::click_token(): the row id, a dot, and 32 hexadecimal characters."
+  },
+  "_notes": [
+    "parameter_format is set to POSITIONAL, which is also the default. If your Graph API version rejects the field, delete the line; nothing else changes.",
+    "The example values are what Meta's reviewers read. They are not sent at runtime and never reach a recipient.",
+    "The example of a URL button is the value of the variable alone, not the whole URL.",
+    "A parameter value may not contain a newline, a tab or more than four consecutive spaces. The plugin strips all of them before sending; this note is here so that the example values you may edit stay legal too."
+  ],
+  "versions": {
+    "es_AR": {
+      "name": "moodle_notification",
+      "language": "es_AR",
+      "category": "UTILITY",
+      "parameter_format": "POSITIONAL",
+      "components": [
+        {
+          "type": "BODY",
+          "text": "{{1}}: {{2}}\n{{3}}",
+          "example": {
+            "body_text": [
+              [
+                "Instituto Demo",
+                "Tarea: Trabajo practico 3",
+                "Se agrego una entrega para la actividad Trabajo practico 3. Fecha limite: viernes 25 de septiembre, 23:59."
+              ]
+            ]
+          }
+        },
+        {
+          "type": "BUTTONS",
+          "buttons": [
+            {
+              "type": "URL",
+              "text": "Ver en Moodle",
+              "url": "https://moodle.example.edu/message/output/whatsapp/go.php?t={{1}}",
+              "example": [
+                "4821.9f1c0b7a2d4e6f8a1b3c5d7e9f0a2b4c"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "en": {
+      "name": "moodle_notification",
+      "language": "en",
+      "category": "UTILITY",
+      "parameter_format": "POSITIONAL",
+      "components": [
+        {
+          "type": "BODY",
+          "text": "{{1}}: {{2}}\n{{3}}",
+          "example": {
+            "body_text": [
+              [
+                "Demo Institute",
+                "Assignment: Lab report 3",
+                "A submission is due for Lab report 3. Due date: Friday 25 September, 23:59."
+              ]
+            ]
+          }
+        },
+        {
+          "type": "BUTTONS",
+          "buttons": [
+            {
+              "type": "URL",
+              "text": "View in Moodle",
+              "url": "https://moodle.example.edu/message/output/whatsapp/go.php?t={{1}}",
+              "example": [
+                "4821.9f1c0b7a2d4e6f8a1b3c5d7e9f0a2b4c"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
