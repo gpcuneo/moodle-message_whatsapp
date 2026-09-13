@@ -26,6 +26,9 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/message/output/lib.php');
 
+use message_whatsapp\form\preferences_form;
+use message_whatsapp\local\recipient;
+
 /**
  * The WhatsApp message processor.
  *
@@ -33,8 +36,9 @@ require_once($CFG->dirroot . '/message/output/lib.php');
  * here: the processor only writes to a database queue that a scheduled task drains, because send_message() runs
  * inside the web request of the user that triggered the event and must not perform any network access.
  *
- * This release is a skeleton. Every method returns a neutral value and nothing is sent, stored or queued yet.
- * The queue, the recipient resolution and the transports are added by the later tasks of the plan.
+ * The phone number and the opt-in of each user live in message_whatsapp_user and are edited from the processor
+ * settings dialogue of the notification preferences page. The queue and the transports are added by the later
+ * tasks of the plan, so send_message() still drops what it receives.
  *
  * @package    message_whatsapp
  * @copyright  2026 Guillermo Cuneo
@@ -65,36 +69,100 @@ class message_output_whatsapp extends message_output {
     /**
      * Loads the user preferences of this processor into the messaging preferences page.
      *
-     * @param array $preferences Array of user preferences, passed by reference.
+     * Resolving the recipient here is what creates the row of a user that has never opened these preferences, and
+     * it is the only place that does: the phone number of the profile is read once, when the user is about to be
+     * shown what the site found out about them. The row is created without consent.
+     *
+     * Core declares this parameter as an array but always hands over the stdClass built by
+     * \core_message\api::get_all_message_preferences(), so both shapes are filled in.
+     *
+     * @param array|stdClass $preferences Array of user preferences, passed by reference.
      * @param int $userid The id of the user whose preferences are being loaded.
      * @return bool Always true.
      */
     public function load_data(&$preferences, $userid) {
-        // Skeleton: there is no message_whatsapp_user table yet, so there is nothing to load.
+        $recipient = recipient::resolve((int) $userid);
+
+        $values = [
+            preferences_form::FIELD_USERID => (int) $userid,
+            preferences_form::FIELD_PHONE => $recipient ? $recipient->phone : '',
+            preferences_form::FIELD_OPTIN => ($recipient && $recipient->optin) ? 1 : 0,
+            'whatsapp_invalid' => ($recipient && $recipient->is_invalid()) ? 1 : 0,
+            'whatsapp_landline' => ($recipient && $recipient->looks_like_landline()) ? 1 : 0,
+        ];
+
+        foreach ($values as $key => $value) {
+            if (is_array($preferences)) {
+                $preferences[$key] = $value;
+            } else {
+                $preferences->{$key} = $value;
+            }
+        }
+
         return true;
     }
 
     /**
      * Builds the fields this processor adds to the messaging preferences page.
      *
-     * @param array $preferences An array of user preferences.
+     * @param array|stdClass $preferences An array of user preferences.
      * @return string|null The HTML of the configuration fields, null when the processor has none.
      */
     public function config_form($preferences) {
-        // Skeleton: the phone number and opt-in fields are not implemented yet.
-        return null;
+        return preferences_form::render($preferences);
     }
 
     /**
-     * Parses the submitted preferences form and stores the values in the preferences array.
+     * Parses the submitted preferences form and stores the phone number and the consent.
+     *
+     * The values are written to message_whatsapp_user instead of to the preferences array: the phone number and the
+     * consent are personal data that the privacy provider and the admin report have to reach by user, and the queue
+     * reads them on every send. Keeping a second copy in user_preferences would only add a place to forget.
      *
      * @param stdClass $form The submitted preferences form data.
      * @param array $preferences The preferences array, passed by reference.
      * @return bool Always true.
      */
     public function process_form($form, &$preferences) {
-        // Skeleton: there is nothing to persist yet.
+        $userid = (int) ($form->{preferences_form::FIELD_USERID} ?? 0);
+        if ($userid <= 0) {
+            return true;
+        }
+
+        if (!$this->can_edit_preferences_of($userid)) {
+            throw new moodle_exception('nopermissions', 'error', '', 'message_whatsapp: edit message profile');
+        }
+
+        $recipient = recipient::resolve($userid);
+        if ($recipient === null) {
+            return true;
+        }
+
+        $recipient->set_phone((string) ($form->{preferences_form::FIELD_PHONE} ?? $recipient->phone));
+        $recipient->set_optin(!empty($form->{preferences_form::FIELD_OPTIN}));
+
         return true;
+    }
+
+    /**
+     * Checks that the current user may write the messaging preferences of the given user.
+     *
+     * The user id travels in a hidden field of a form that the browser can rewrite, so it is checked again here.
+     * Core validates the id it received itself, but never passes it to this method, and the two can differ. The
+     * question is answered by the same core function that decides who may open this dialogue in the first place.
+     *
+     * @param int $userid The id of the user whose preferences are about to be written.
+     * @return bool True when the current user may write them.
+     */
+    private function can_edit_preferences_of(int $userid): bool {
+        global $CFG;
+
+        // Loaded here and not at the top of the file: this is the only path that needs it.
+        require_once($CFG->dirroot . '/message/lib.php');
+
+        $user = core_user::get_user($userid);
+
+        return $user && core_message_can_edit_message_profile($user);
     }
 
     /**
@@ -113,15 +181,24 @@ class message_output_whatsapp extends message_output {
     /**
      * Checks whether a given user can receive messages through this processor.
      *
-     * A user is only reachable with a valid phone number and an explicit opt-in, neither of which is stored yet,
-     * so nothing is ever sent in this release.
+     * A user is only reachable with a usable phone number and an explicit opt-in. This never creates the row of a
+     * user that has none: core asks this question while a message is being delivered, and no row means no consent,
+     * so there is nothing to find out and nothing to write.
      *
      * @param stdClass|null $user The user object, defaults to $USER.
      * @return bool True when the user has opted in with a valid phone number.
      */
     public function is_user_configured($user = null) {
-        // Skeleton: without the opt-in table no user can be considered reachable.
-        return false;
+        global $USER;
+
+        $user = $user ?? $USER;
+        if (empty($user->id)) {
+            return false;
+        }
+
+        $recipient = recipient::find((int) $user->id);
+
+        return $recipient !== null && $recipient->is_sendable();
     }
 
     /**

@@ -47,4 +47,35 @@ if ($ADMIN->fulltree) {
         '',
         $modes
     ));
+
+    $settings->add(new admin_setting_configtext(
+        'message_whatsapp/sitename_short',
+        new lang_string('sitenameshort', 'message_whatsapp'),
+        new lang_string('sitenameshort_desc', 'message_whatsapp'),
+        '',
+        PARAM_TEXT,
+        30
+    ));
+
+    $phonesources = [
+        '' => new lang_string('phonesourcenone', 'message_whatsapp'),
+        'phone1' => new lang_string('phonesourcephone1', 'message_whatsapp'),
+        'phone2' => new lang_string('phonesourcephone2', 'message_whatsapp'),
+    ];
+
+    $settings->add(new admin_setting_configselect(
+        'message_whatsapp/phonesource',
+        new lang_string('phonesource', 'message_whatsapp'),
+        new lang_string('phonesource_desc', 'message_whatsapp'),
+        \message_whatsapp\local\recipient::DEFAULT_PHONE_SOURCE,
+        $phonesources
+    ));
+
+    $settings->add(new admin_setting_configselect(
+        'message_whatsapp/defaultcountry',
+        new lang_string('defaultcountry', 'message_whatsapp'),
+        new lang_string('defaultcountry_desc', 'message_whatsapp'),
+        \message_whatsapp\local\recipient::FALLBACK_COUNTRY,
+        get_string_manager()->get_list_of_countries()
+    ));
 }
