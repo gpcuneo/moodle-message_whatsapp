@@ -67,8 +67,10 @@ final class report_test extends \advanced_testcase {
         $ana = $this->getDataGenerator()->create_user(['firstname' => 'Ana', 'lastname' => 'Alumna']);
         $beto = $this->getDataGenerator()->create_user(['firstname' => 'Beto', 'lastname' => 'Alumno']);
 
-        $this->add_row($beto->id, queue::STATUS_SENT, 1, null, 'mod_forum', 'posts', 100);
-        $this->add_row($ana->id, queue::STATUS_FAILED, 5, 'Cloud API error 131026', 'mod_assign', 'assign', 200);
+        // The helper takes an age in seconds, so the bigger number is the older row: Beto is queued three
+        // minutes before Ana, and the report has to put Ana first.
+        $this->add_row($beto->id, queue::STATUS_SENT, 1, null, 'mod_forum', 'posts', 200);
+        $this->add_row($ana->id, queue::STATUS_FAILED, 5, 'Cloud API error 131026', 'mod_assign', 'assign', 20);
 
         $result = $this->retrieve();
 

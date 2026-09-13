@@ -70,7 +70,9 @@ if (has_capability('moodle/site:config', context_system::instance())) {
     $PAGE->set_url($pageurl);
     $PAGE->set_pagelayout('report');
     $PAGE->set_title(get_string('logpage', 'message_whatsapp'));
-    $PAGE->set_heading(get_string('logpage', 'message_whatsapp'));
+    // The heading of the page is the site, and not the report, exactly as admin_externalpage_setup() leaves it
+    // on the other branch. Naming the report here too prints its title twice, once above the other.
+    $PAGE->set_heading($SITE->fullname);
 }
 
 if ($action === MESSAGE_WHATSAPP_REPORT_RETRY) {

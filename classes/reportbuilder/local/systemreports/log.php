@@ -76,8 +76,8 @@ class log extends system_report {
         $this->set_main_table(store::TABLE, $alias);
         $this->add_entity($entity);
 
-        // `id` addresses the row from the action link; `status` is what the action callback decides on. Both have
-        // to be selected explicitly, because neither is a column of the report on its own.
+        // The `id` addresses the row from the action link; `status` is what the action callback decides on.
+        // Both have to be selected explicitly, because neither is a column of the report on its own.
         $this->add_base_fields("{$alias}.id, {$alias}.status");
 
         // The recipient. Joined and not stored again: the queue keeps the number it sent to, on purpose, but the
@@ -123,9 +123,9 @@ class log extends system_report {
             'queue:timecreated',
         ]);
 
-        // "Full name with link" names the shape of the core column and not what it holds here. On this screen the
-        // person in that cell is the one the notification was addressed to, and that is what decides whether a
-        // row is the one being looked for.
+        // The core column "full name with link" is named for its shape and not for what it holds here. On
+        // this screen the person in that cell is the one the notification was addressed to, and that is what
+        // decides whether a row is the one being looked for.
         $recipient = $this->get_column('user:fullnamewithlink');
         if ($recipient !== null) {
             $recipient->set_title(new lang_string('logrecipient', 'message_whatsapp'));

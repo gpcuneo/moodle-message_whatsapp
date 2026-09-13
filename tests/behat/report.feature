@@ -4,21 +4,26 @@ Feature: Read the WhatsApp delivery report and queue a failed message again
   As someone who operates the site
   I need a report of what was queued for WhatsApp, filtered by what became of it
 
-  # This feature is driven by the administrator and not by a manager, which is not what T3.1 asks for.
+  # The report is read here by both of the people §3.8 lets in, because they arrive at it through different code.
   # A plugin of type `message` has its settings.php included only for a user with moodle/site:config
   # (admin/settings/messaging.php wraps everything in `if ($hassiteconfig)`, and
   # \core\plugininfo\message::load_settings() returns early on the same condition), so a manager never gets the
-  # admin_externalpage into their tree and admin_externalpage_setup() answers "Access denied" before
-  # message/whatsapp:viewlog is ever looked at. That is written up in docs/decisiones-pendientes.md under
-  # "T3.1 — Un manager no puede llegar a una admin_externalpage de un plugin message", and the scenario moves to
-  # a manager as soon as it is resolved. The capability itself is covered by report_test.php, which grants it to
-  # a role of its own and reads the report as that user.
+  # admin_externalpage into their tree. report.php therefore sets up its own page for anyone who is not a site
+  # administrator, and the manager scenario below is what proves that half works.
+  #
+  # Refusing someone without the capability is not scenarioed here: Behat fails any step that renders an
+  # exception page, so an expected refusal cannot be asserted. report_test.php covers it instead, in both
+  # directions.
   Background:
     Given the following "users" exist:
       | username | firstname | lastname | email                |
       | student1 | Ana       | Alumna   | student1@example.com |
       | student2 | Beto      | Alumno   | student2@example.com |
       | student3 | Carla     | Alumna   | student3@example.com |
+      | manager1 | Dora      | Gestora  | manager1@example.com |
+    And the following "role assigns" exist:
+      | user     | role    | contextlevel | reference |
+      | manager1 | manager | System       |           |
     And the following WhatsApp queue entries exist:
       | user     | component  | name                | status  | attempts | error                                         |
       | student1 | mod_assign | assign_notification | failed  | 5        | Cloud API error 131026: Message undeliverable |
@@ -70,8 +75,13 @@ Feature: Read the WhatsApp delivery report and queue a failed message again
     # The diagnostic survives the retry, because zeroing the attempts throws away the only other trace of it.
     And I should see "Cloud API error 131026" in the "reportbuilder-table" "table"
 
-  Scenario: Someone who does not hold the capability is refused the page
-    Given I log in as "student1"
+  Scenario: A manager reads the report outside the administration tree
+    Given I log in as "manager1"
     When I visit "/message/output/whatsapp/report.php"
-    Then I should see "Access denied"
-    And the WhatsApp entry of "student1" is "failed" with 5 tries
+    Then I should see "WhatsApp delivery report"
+    And I should see "Ana Alumna" in the "reportbuilder-table" "table"
+    # The page a manager gets is built by report.php itself, so it carries no administration breadcrumb.
+    And I should not see "Site administration" in the "page-navbar" "region"
+    # The heading of the page is the site. Naming the report there as well printed its title twice, one on
+    # top of the other, which is what a screenshot of this page showed and no assertion had caught.
+    And I should see "Acceptance test site" in the "h1" "css_element"
