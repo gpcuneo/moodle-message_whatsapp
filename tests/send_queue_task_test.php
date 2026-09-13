@@ -433,16 +433,18 @@ final class send_queue_task_test extends \advanced_testcase {
     }
 
     /**
-     * The batch is a hundred rows by default and follows the setting of T2.5 once it exists.
+     * The batch is a hundred rows by default and follows the setting T2.5 declared.
      *
-     * `settings.php` belongs to T2.5, so the setting is not declared anywhere yet; the task reads it defensively
-     * and falls back, which is what makes adding it a change to that one file.
+     * The task reads the setting defensively and falls back to its own constant, which is what made adding the
+     * setting a change to `settings.php` alone. The two defaults are pinned against each other here: the setting
+     * now ships a default of its own, and a site that never touched it has to get the same batch as a site
+     * installed before the setting existed.
      *
      * @return void
      */
     public function test_the_batch_size_is_a_hundred_by_default_and_follows_the_setting(): void {
         $this->assertSame(100, send_queue::DEFAULT_BATCH_SIZE);
-        $this->assertFalse(get_config('message_whatsapp', 'batchsize'));
+        $this->assertSame((string) send_queue::DEFAULT_BATCH_SIZE, get_config('message_whatsapp', 'batchsize'));
 
         $this->queue_row();
         $this->queue_row();

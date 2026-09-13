@@ -442,23 +442,25 @@ final class transport_factory_test extends \advanced_testcase {
     }
 
     /**
-     * While the fake transport class does not exist, the flag is ignored rather than fatal.
+     * The fake transport flag builds the class it names, which T2.5 of the plan wrote.
      *
-     * T2.5 of the plan writes that class, under the name this test pins. Until then a config.php that sets the
-     * flag has to keep working.
+     * This test pinned the name while that class was missing, and asserted that the flag was ignored rather than
+     * fatal until it arrived. It now pins the other half of the same contract: the name is still the one the
+     * factory looks for, and the class behind it is there, so a config.php that sets the flag gets an in memory
+     * transport instead of a refusal. What the transport itself does is tested in `fake_transport_test`.
      */
-    public function test_the_fake_transport_flag_is_ignored_while_its_class_is_missing(): void {
+    public function test_the_fake_transport_flag_builds_the_class_it_names(): void {
         global $CFG;
 
         $method = new \ReflectionMethod(factory::class, 'fake_class');
         $method->setAccessible(true);
 
         $this->assertSame('message_whatsapp\\transport\\fake', $method->invoke(null));
-        $this->assertFalse(class_exists('message_whatsapp\\transport\\fake'));
+        $this->assertTrue(class_exists('message_whatsapp\\transport\\fake'));
 
         $CFG->message_whatsapp_fake_transport = true;
 
-        $this->assertInstanceOf(unconfigured::class, factory::instance());
+        $this->assertInstanceOf('message_whatsapp\\transport\\fake', factory::instance());
     }
 
     /**

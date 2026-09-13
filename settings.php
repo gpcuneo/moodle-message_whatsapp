@@ -17,6 +17,10 @@
 /**
  * Administration settings of the WhatsApp message processor.
  *
+ * The order of the page follows the order in which an administrator has to make the decisions: how the site
+ * reaches WhatsApp, the credentials of that way, where the phone numbers come from, what is sent, when the queue
+ * may send it, and how long the record of it is kept.
+ *
  * @package    message_whatsapp
  * @copyright  2026 Guillermo Cuneo
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -25,6 +29,17 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/message/output/whatsapp/message_output_whatsapp.php');
+
+// The page of the two test buttons is registered whatever depth the administration tree is being built to, and
+// not only inside the `fulltree` branch below. `admin_externalpage_setup()` refuses to set a page up that is not
+// in the tree, so a registration that only happened while the full tree was loaded would make the page reachable
+// from the settings screen and unreachable from anywhere else, including a bookmark.
+$ADMIN->add('messaging', new admin_externalpage(
+    'message_whatsapp_test',
+    new lang_string('testpage', 'message_whatsapp'),
+    new moodle_url('/message/output/whatsapp/test.php'),
+    'message/whatsapp:managesettings'
+));
 
 if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_heading(
@@ -47,6 +62,16 @@ if ($ADMIN->fulltree) {
         $modes
     ));
 
+    $settings->add(new admin_setting_description(
+        'message_whatsapp/testpagelink',
+        new lang_string('testpage', 'message_whatsapp'),
+        new lang_string(
+            'testpage_desc',
+            'message_whatsapp',
+            (new moodle_url('/message/output/whatsapp/test.php'))->out()
+        )
+    ));
+
     $settings->add(new admin_setting_configtext(
         'message_whatsapp/sitename_short',
         new lang_string('sitenameshort', 'message_whatsapp'),
@@ -54,6 +79,86 @@ if ($ADMIN->fulltree) {
         '',
         PARAM_TEXT,
         30
+    ));
+
+    // Credentials of direct mode. They are shown whichever mode is selected, because an administrator fills them
+    // in before the mode works and because hiding them behind the selected mode would hide, from the one screen
+    // that is supposed to explain the channel, the reason why the other mode is not usable yet.
+    $settings->add(new admin_setting_heading(
+        'message_whatsapp/metasettings',
+        new lang_string('metasettings', 'message_whatsapp'),
+        new lang_string('metasettings_desc', 'message_whatsapp')
+    ));
+
+    // The three secrets of this section use the unmasking password field. The value is stored in the clear either
+    // way -- the site has to be able to send the token to Meta -- so what the widget buys is that a token is not
+    // left on screen behind an administrator, not on a projector and not in a screenshot of a support ticket.
+    $settings->add(new admin_setting_configpasswordunmask(
+        'message_whatsapp/metatoken',
+        new lang_string('metatoken', 'message_whatsapp'),
+        new lang_string('metatoken_desc', 'message_whatsapp'),
+        ''
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'message_whatsapp/metaphoneid',
+        new lang_string('metaphoneid', 'message_whatsapp'),
+        new lang_string('metaphoneid_desc', 'message_whatsapp'),
+        '',
+        PARAM_ALPHANUM,
+        24
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'message_whatsapp/metawabaid',
+        new lang_string('metawabaid', 'message_whatsapp'),
+        new lang_string('metawabaid_desc', 'message_whatsapp'),
+        '',
+        PARAM_ALPHANUM,
+        24
+    ));
+
+    $settings->add(new admin_setting_configpasswordunmask(
+        'message_whatsapp/metaappsecret',
+        new lang_string('metaappsecret', 'message_whatsapp'),
+        new lang_string('metaappsecret_desc', 'message_whatsapp'),
+        ''
+    ));
+
+    $settings->add(new admin_setting_configpasswordunmask(
+        'message_whatsapp/metaverifytoken',
+        new lang_string('metaverifytoken', 'message_whatsapp'),
+        new lang_string('metaverifytoken_desc', 'message_whatsapp'),
+        ''
+    ));
+
+    // The URL Meta has to be given for the delivery reports to come back. It is built from `wwwroot`, which maps
+    // to the document root in both 4.5 and 5.2, so the string is the same in both and can be copied as it stands.
+    $settings->add(new admin_setting_description(
+        'message_whatsapp/webhookurl',
+        new lang_string('webhookurl', 'message_whatsapp'),
+        new lang_string(
+            'webhookurl_desc',
+            'message_whatsapp',
+            $CFG->wwwroot . '/message/output/whatsapp/webhook.php'
+        )
+    ));
+
+    // The default is the constant of the transport that pastes it into the URL, and not a second copy of the
+    // number: two spellings of the same default is a bug waiting for the day one of them is bumped.
+    $settings->add(new admin_setting_configtext(
+        'message_whatsapp/graphversion',
+        new lang_string('graphversion', 'message_whatsapp'),
+        new lang_string('graphversion_desc', 'message_whatsapp'),
+        \message_whatsapp\transport\meta_cloud::DEFAULT_GRAPH_VERSION,
+        '/^(v\d+\.\d+)?$/',
+        8
+    ));
+
+    $settings->add(new admin_setting_heading(
+        'message_whatsapp/recipientsettings',
+        new lang_string('recipientsettings', 'message_whatsapp'),
+        new lang_string('recipientsettings_desc', 'message_whatsapp')
     ));
 
     $phonesources = [
@@ -76,6 +181,27 @@ if ($ADMIN->fulltree) {
         new lang_string('defaultcountry_desc', 'message_whatsapp'),
         \message_whatsapp\local\recipient::FALLBACK_COUNTRY,
         get_string_manager()->get_list_of_countries()
+    ));
+
+    // The template and its languages are shown and not offered as a choice. Version 1 of the plugin sends one
+    // approved template, whose name and whose two language versions are fixed in the code that builds the message
+    // and are what has to be created in Meta letter by letter. A text field here would look like a way of
+    // pointing the site at another template, and it would be a way of pointing it at a template that does not
+    // exist, which fails once per notification with an error from Meta instead of once here.
+    $settings->add(new admin_setting_heading(
+        'message_whatsapp/templatesettings',
+        new lang_string('templatesettings', 'message_whatsapp'),
+        new lang_string('templatesettings_desc', 'message_whatsapp')
+    ));
+
+    $settings->add(new admin_setting_description(
+        'message_whatsapp/templatename',
+        new lang_string('templatename', 'message_whatsapp'),
+        new lang_string('templatename_desc', 'message_whatsapp', (object) [
+            'template' => \message_whatsapp\local\template_mapper::TEMPLATE,
+            'spanish' => \message_whatsapp\local\template_mapper::LANG_ES,
+            'english' => \message_whatsapp\local\template_mapper::LANG_EN,
+        ])
     ));
 
     $settings->add(new admin_setting_heading(
@@ -119,6 +245,30 @@ if ($ADMIN->fulltree) {
         new lang_string('dailycap', 'message_whatsapp'),
         new lang_string('dailycap_desc', 'message_whatsapp'),
         0,
+        PARAM_INT,
+        5
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'message_whatsapp/batchsize',
+        new lang_string('batchsize', 'message_whatsapp'),
+        new lang_string('batchsize_desc', 'message_whatsapp'),
+        \message_whatsapp\task\send_queue::DEFAULT_BATCH_SIZE,
+        PARAM_INT,
+        5
+    ));
+
+    $settings->add(new admin_setting_heading(
+        'message_whatsapp/datasettings',
+        new lang_string('datasettings', 'message_whatsapp'),
+        new lang_string('datasettings_desc', 'message_whatsapp')
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'message_whatsapp/retention',
+        new lang_string('retention', 'message_whatsapp'),
+        new lang_string('retention_desc', 'message_whatsapp'),
+        90,
         PARAM_INT,
         5
     ));
