@@ -10,6 +10,10 @@ WhatsApp message, through the official **WhatsApp Cloud API** of Meta.
   run for a term with real students. Read [CHANGELOG.md](CHANGELOG.md) before installing it anywhere that matters.
 - **Licence:** GPL v3 or later. Free, and it stays free: the plugin adds nothing to what Meta charges you.
 
+![The WhatsApp delivery report: one row per notification, with its status, attempts and error](docs/img/report.png)
+
+*The delivery report: every notification the site queued, and what became of it.*
+
 ---
 
 ## Read this first: the test number sends to five people
@@ -336,6 +340,8 @@ a button component with every single message, so a template without a button is 
 
 Everything is in **Site administration > General > Messaging > WhatsApp**.
 
+![The WhatsApp settings page in Moodle, showing the sending mode and the Meta credentials](docs/img/settings.png)
+
 ## 7. The settings
 
 These are all of them. The name in brackets is the internal name, which is what you would use in
@@ -416,6 +422,8 @@ is what Meta needs to hear.
 3. Set your own phone number and tick the opt-in box in your own preferences (step 10), then press
    **Send a test to my number** on the same page. It **queues** a notification; it does not send it there and
    then, on purpose, because that would test a path no real notification takes.
+
+![The Test WhatsApp page, with the current configuration, Test connection and Send a test to my number](docs/img/test.png)
 4. Run cron, or wait a minute: `php admin/cli/cron.php`. The message should arrive.
    - If the page said the message was *deferred*, you are inside the quiet hours window. It will go out when the
      window closes, or you can turn `quiethours` off to see it now.
@@ -428,6 +436,8 @@ for other people in this release.
 
 Each user, in their own **Preferences > Notification preferences**, opens the settings of the **WhatsApp**
 column and finds two fields:
+
+![The WhatsApp processor settings of a user: phone number and the opt-in checkbox](docs/img/preferences.png)
 
 - **WhatsApp phone number** — prefilled from their profile according to `phonesource`, and editable. It has to be
   a mobile in international format, `+54 9 11 1234-5678`. The form warns them if the number looks like a
@@ -475,6 +485,8 @@ not what became of one message, but whether anything is going out at all. It sho
 and when the sending task last ran. If there is something waiting and that task has not run in ten minutes, the
 page says so in red: it is scheduled every minute, so a silence that long means cron is not running or is not
 reaching it, and a queue that is not being drained looks exactly like a queue with nothing in it.
+
+![The WhatsApp channel status page: what went out today and what is still waiting](docs/img/status.png)
 
 Rows disappear after `retention` days, and so do the records of the clicks on their buttons. Entries still
 waiting to be sent are never deleted. Set `retention` to 0 to keep everything for good. The report can only show
