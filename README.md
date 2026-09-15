@@ -598,6 +598,23 @@ For Behat and for manual testing there is `$CFG->message_whatsapp_fake_transport
 transport with an in-memory one that sends nothing. The test page shows a warning in yellow while it is on, so
 that a connection reported as OK cannot be mistaken for a real one.
 
+## Who maintains this
+
+`message_whatsapp` is written and maintained by Guillermo Cuneo. It is free software under the GPL and it stays
+that way: everything the plugin does is in this repository, and nothing it does is held back for a paid tier.
+
+Two things are available commercially. They are named here because "who is behind this" is a fair question of a
+plugin that talks to a paid API, not as an offer:
+
+- **A hosted gateway service**, for sites that would rather not run the Meta side themselves. Gateway mode talks
+  to it, and to any other service that implements the same API. It is optional, and the plugin is complete
+  without it: direct mode needs nothing but your own Meta credentials.
+- **Paid work** — installation, upgrades, performance, integrations and custom development on the Moodle LMS —
+  at [www.cuneo.com.ar](https://www.cuneo.com.ar).
+
+Bug reports and patches are welcome in the issue tracker either way, and are answered whether or not anything
+was paid for.
+
 ## Licence
 
 Copyright 2026 Guillermo Cuneo.
@@ -611,3 +628,6 @@ with this program. If not, see [https://www.gnu.org/licenses/](https://www.gnu.o
 [LICENSE](LICENSE) file in this directory.
 
 WhatsApp is a trademark of Meta Platforms, Inc. This plugin is not affiliated with or endorsed by Meta.
+
+Moodle™ is a registered trademark of Moodle Pty Ltd. This plugin and its author are not affiliated with,
+endorsed by, or sponsored by Moodle Pty Ltd.
