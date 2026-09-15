@@ -610,7 +610,7 @@ plugin that talks to a paid API, not as an offer:
   to it, and to any other service that implements the same API. It is optional, and the plugin is complete
   without it: direct mode needs nothing but your own Meta credentials.
 - **Paid work** — installation, upgrades, performance, integrations and custom development on the Moodle LMS —
-  at [www.cuneo.com.ar](https://www.cuneo.com.ar).
+  at [www.cuneo.com.ar/servicios/e-learning](https://www.cuneo.com.ar/servicios/e-learning/).
 
 Bug reports and patches are welcome in the issue tracker either way, and are answered whether or not anything
 was paid for.
